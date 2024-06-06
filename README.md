@@ -17,10 +17,10 @@ QuizMaster is an interactive, real-time quiz application designed for educationa
 - **Single Page Application (SPA)**: The frontend will be a SPA, providing a smooth user experience without page reloads.
 - **Backend API**: The backend will use Express as the core API, ensuring a robust and scalable server-side architecture.
 - **RESTful API**: The application's API will follow RESTful principles for clear and predictable interactions.
-- **Deployment**: The application will be deployed on a Virtual Machine using Docker and Docker Compose. All deployment files, including CI files for building images, will be committed to GitHub.
-- **Accessibility**: The application will be publicly accessible without requiring any interaction with the development team.
+- **Deployment**: The application will be deployed on a Virtual Machine on Google Cloud using Docker and Docker Compose. All deployment files, including CI files for building images, will be committed to GitHub.
+- **Accessibility**: The application will be publicly accessible (hosted with a public URL on Google Cloud) without requiring any interaction with the development team.
 - **Third-party API**: The application will integrate with the Open Trivia Database API to fetch trivia questions.
-- **OAuth 2.0**: OAuth 2.0 will be implemented for user authentication, allowing users to sign in with their Google accounts.
+- **OAuth 2.0**: OAuth 2.0 will be implemented for user authentication, allowing users to sign in with their Google accounts. Can use the vue3-google-login plugin to achieve this.
 
 # Additional Requirements Fulfillment:
 - ### Real-time Functionality:
