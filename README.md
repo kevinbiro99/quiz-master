@@ -10,7 +10,7 @@ Kevin Biro - kevin.biro@mail.utoronto.ca
 Billy Zhou - billi.zhou@mail.utoronto.ca 
 
 # Brief Description of the Web Application:	
-QuizMaster is an interactive, real-time quiz application designed for educational and entertainment purposes. Users can create, share, and participate in quizzes together seamlessly. The application provides real-time updates, tracks scores, and supports various question formats to enhance engagement.
+QuizMaster is an innovative web application that generates real-time multiplayer quizzes from video content. Users can upload their own videos or provide YouTube links. The application parses the audio to text, integrates with ChatGPT to create quiz questions, and cuts the video to reveal the answers.
 
 # Required Elements Fulfillment:
 - **Frontend Framework**: The frontend will be built using Vue 3 to ensure a modern and responsive user interface.
@@ -19,30 +19,32 @@ QuizMaster is an interactive, real-time quiz application designed for educationa
 - **RESTful API**: The application's API will follow RESTful principles for clear and predictable interactions.
 - **Deployment**: The application will be deployed on a Virtual Machine on Google Cloud using Docker and Docker Compose. All deployment files, including CI files for building images, will be committed to GitHub.
 - **Accessibility**: The application will be publicly accessible (hosted with a public URL on Google Cloud) without requiring any interaction with the development team.
-- **Third-party API**: The application will integrate with the Open Trivia Database API to fetch trivia questions.
+- **Third-party API**: The application will use any API that can do audio to time stamped transcripts (Google Cloud Speech-to-Text API) and will also use OpenAI API for ChatGPT integration to generate the quiz questions.
 - **OAuth 2.0**: OAuth 2.0 will be implemented for user authentication, allowing users to sign in with their Google accounts. Can use the vue3-google-login plugin to achieve this.
 
 # Additional Requirements Fulfillment:
 - ### Real-time Functionality:
-  - The application will use WebSockets to provide real-time updates for quiz sessions, reflecting user answers and score changes instantly.
-  - Potential enhancement: add a collaborative quiz editor where multiple users can work together in real-time to create, edit, and organize quiz questions. This feature will include the ability to see other users' mouse movements on the screen, similar to how Figma allows for collaborative design.
+  - The application will use WebSockets to provide real-time updates for quiz sessions, reflecting user answers and score changes instantly during the question.
+  - When a user clicks on an answer, other players can see a live update of the tally (correct / incorrect), and when everyone has answered, a bar graph is shown of quiz answers with the correct one highlighted and a leaderboard is updated.
 - ### Long-running Task:
-  - The application will include a feature for generating detailed quiz reports, which might take more than 10 seconds to compile, especially for large datasets.
-- ### Webhook from an external service: 
-  - Can set up a notification system for the application when a quiz is completed or when user gets challenged to a quiz off, the creator is notified through Slack
-Whenever a quiz is completed, automatically update a Google Sheet with the quiz results. This can be useful for tracking performance over time or for further analysis.
+  - Generating the quiz from a video will take >10s to complete
+    - Extract the audio from the video
+    - Send audio to Google Cloud text to speech API to get text from the video with timestamps (split the video into relevant chunks for the quiz questions)
+    - Query the api of some natural language model with the extracted text to give quiz questions with answers found in the video (can take some time if we want high quality answers).
+    - Find the answers to each question in the text and associate it with video timestamps of when they occur in the video
+    - Create clips of the video answers to play after each question (optional toggle if player gets a question wrong or wants a reference).
 
 # Milestones:
 - ### Alpha Version (3 weeks):
+    - Initial integration with Youtube API to gather video information (or any other API that retrieves time stamped text from audio)
+    - Initial OpenAI integration to generate quiz questions from the time stamped text
     - Basic quiz creation and participation functionality.
-        - Create custom questions, answers, and format, or use question from Open Trivia
+        - Create custom questions, answers, and format
+        - Real-time quiz updates using WebSockets
         - Score based time taken and overall correctness, can see how others did
-    - Integration with Open Trivia Database API.
     - Basic user authentication with OAuth 2.0.
         - Create and view own and other’s profile
     - Initial deployment setup with Docker and Docker Compose.
-    - Real-time quiz updates using WebSockets.
-        - How user did compared to others
 - ### Beta Version (2 weeks):
     - Enhanced user interface with Vue 3 components.
         - Animation, effects, and loading screen
