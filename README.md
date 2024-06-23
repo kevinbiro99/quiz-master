@@ -15,7 +15,7 @@ QuizMaster is an innovative web application that generates real-time multiplayer
 # Required Elements Fulfillment:
 - **Frontend Framework**: The frontend will be built using Vue 3 to ensure a modern and responsive user interface.
 - **Single Page Application (SPA)**: The frontend will be a SPA, providing a smooth user experience without page reloads.
-- **Backend API**: The backend will use Express as the core API, ensuring a robust and scalable server-side architecture.
+- **Backend API**: The backend will use Express as the core API, ensuring a robust and scalable server-side architecture. We will use a SQL backend like PostgreSQL to store users and quizzes for our application.
 - **RESTful API**: The application's API will follow RESTful principles for clear and predictable interactions.
 - **Deployment**: The application will be deployed on a Virtual Machine on Google Cloud using Docker and Docker Compose. All deployment files, including CI files for building images, will be committed to GitHub.
 - **Accessibility**: The application will be publicly accessible (hosted with a public URL on Google Cloud) without requiring any interaction with the development team.
@@ -29,7 +29,7 @@ QuizMaster is an innovative web application that generates real-time multiplayer
 - ### Long-running Task:
   - Generating the quiz from a video will take >10s to complete
     - Extract the audio from the video
-    - Send audio to Google Cloud text to speech API to get text from the video with timestamps (split the video into relevant chunks for the quiz questions)
+    - Send audio to Google Cloud text to speech API (or Whisper) to get text from the video with timestamps (split the video into relevant chunks for the quiz questions)
     - Query the api of some natural language model with the extracted text to give quiz questions with answers found in the video (can take some time if we want high quality answers).
     - Find the answers to each question in the text and associate it with video timestamps of when they occur in the video
     - Create clips of the video answers to play after each question (optional toggle if player gets a question wrong or wants a reference).
@@ -48,8 +48,7 @@ QuizMaster is an innovative web application that generates real-time multiplayer
 - ### Beta Version (2 weeks):
     - Enhanced user interface with Vue 3 components.
         - Animation, effects, and loading screen
-    - Detailed quiz reporting functionality.
-        - Performance history, can sort view by week, month, year, in form of chart or graph
+    - Fix bugs and integration issues for real time quizzes.
     - Full deployment on a Virtual Machine with CI/CD pipelines.
 - ### Final Version (3 weeks):
     - Polished user interface and user experience improvements.
