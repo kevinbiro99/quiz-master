@@ -1,0 +1,10 @@
+.env
+lib
+tsconfig.tsbuildinfo
+node_modules/
+uploads
+db
+*.sqlite
+.npm
+.eslintcache
+.vscode/
