@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import HostPage from '../views/HostPage.vue'
+import JoinPage from '../views/JoinPage.vue'
+import QuizHost from '../views/QuizHost.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,6 +25,9 @@ const router = createRouter({
       name: 'login',
       component: () => import('../views/LoginView.vue')
     },
+    { path: '/host', component: HostPage },
+    { path: '/join', component: JoinPage },
+    { path: '/host/:quizId', name: 'QuizHost', component: QuizHost }
   ]
 })
 

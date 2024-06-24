@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import TheGreeting from './components/TheGreeting.vue'
-
 </script>
 
 <template>
@@ -11,11 +10,12 @@ import TheGreeting from './components/TheGreeting.vue'
     <div class="wrapper">
       <TheGreeting msg="QuizMaster" />
 
-
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/credits">Credits</RouterLink>
         <RouterLink to="/login">Login</RouterLink>
+        <RouterLink to="/host">Host</RouterLink>
+        <RouterLink to="/join">Join</RouterLink>
       </nav>
     </div>
   </header>

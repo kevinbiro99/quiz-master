@@ -1,4 +1,4 @@
-import { Sequelize } from 'sequelize';
+import { Sequelize } from "sequelize";
 import env from "dotenv";
 
 env.config();
@@ -11,5 +11,5 @@ export const sequelize = new Sequelize({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   ssl: true,
-  clientMinMessages: 'notice'
+  clientMinMessages: "notice",
 });

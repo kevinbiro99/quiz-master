@@ -8,9 +8,8 @@ defineProps<{
   <div class="greetings">
     <h1 class="green">{{ msg }}</h1>
     <h3>
-      QuizMaster is your ultimate platform for creating engaging, 
-      real-time multiplayer quizzes from video content. Whether you 
-      want to test your friends, challenge your colleagues, or simply 
+      QuizMaster is your ultimate platform for creating engaging, real-time multiplayer quizzes from
+      video content. Whether you want to test your friends, challenge your colleagues, or simply
       have fun with family, QuizMaster makes it easy and exciting.
     </h3>
   </div>

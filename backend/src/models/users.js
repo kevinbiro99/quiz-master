@@ -1,5 +1,6 @@
 import { sequelize } from "../datasource.js";
 import { DataTypes } from "sequelize";
+import { Quiz } from "./quizzes.js";
 
 export const User = sequelize.define("User", {
   username: {
@@ -12,3 +13,6 @@ export const User = sequelize.define("User", {
     allowNull: false,
   },
 });
+
+User.hasMany(Quiz);
+Quiz.belongsTo(User);

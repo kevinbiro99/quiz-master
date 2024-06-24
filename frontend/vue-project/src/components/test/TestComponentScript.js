@@ -1,22 +1,22 @@
-import api from '@/services/api-service';
+import api from '@/services/api-service'
 
 export default {
   data() {
     return {
-      message: '',
-    };
+      message: ''
+    }
   },
   created() {
-    this.fetchMessage();
+    this.fetchMessage()
   },
   methods: {
     async fetchMessage() {
       try {
-        const response = await api.getUsers();
-        this.message = response;
+        const response = await api.getUsers()
+        this.message = response
       } catch (error) {
-        console.error('Error fetching message:', error);
+        console.error('Error fetching message:', error)
       }
-    },
-  },
-};
+    }
+  }
+}
