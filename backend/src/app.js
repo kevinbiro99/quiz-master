@@ -4,11 +4,20 @@ import { sequelize } from "./datasource.js";
 import express from "express";
 import bodyParser from "body-parser";
 import env from "dotenv";
+import { initializeSocket } from "./socket.js";
+import { createServer } from "http";
 
 env.config();
 export const app = express();
+const httpServer = createServer(app);
 
-app.use(cors());
+app.use(express.static("static"));
+const corsOptions = {
+  origin: "http://localhost:5173",
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 try {
@@ -24,7 +33,9 @@ try {
 
 app.use("/api/users", usersRouter);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const PORT = 3000;
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+initializeSocket(server);

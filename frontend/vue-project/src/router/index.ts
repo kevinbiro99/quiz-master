@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import HostPage from '../views/HostPage.vue'
 import JoinPage from '../views/JoinPage.vue'
 import QuizHost from '../views/QuizHost.vue'
+import QuizPage from '../views/QuizPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,7 +28,8 @@ const router = createRouter({
     },
     { path: '/host', component: HostPage },
     { path: '/join', component: JoinPage },
-    { path: '/host/:quizId', name: 'QuizHost', component: QuizHost }
+    { path: '/host/:quizId', name: 'QuizHost', component: QuizHost },
+    { path: '/quiz/', name: 'QuizPage', component: QuizPage },
   ]
 })
 

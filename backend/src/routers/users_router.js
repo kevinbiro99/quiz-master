@@ -93,7 +93,9 @@ usersRouter.get("/:id/quizzes/:quizId", async (req, res) => {
   if (!quiz) {
     return res.status(404).json({ error: "Quiz not found" });
   }
-  return res.json(quiz);
+  // Include questions in the response
+  const questions = await Question.findAll({ where: { QuizId: quiz.id } });
+  return res.json({quiz: quiz, questions: questions});
 });
 
 usersRouter.delete("/:id/", async (req, res) => {
