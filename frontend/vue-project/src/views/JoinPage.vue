@@ -9,10 +9,10 @@
 </template>
 
 <script>
-import { socket } from '@/socket';
-import { socketFunctions } from '@/socket';
-import { state } from '@/socket';
-import { watch } from 'vue';
+import { socket } from '@/socket'
+import { socketFunctions } from '@/socket'
+import { state } from '@/socket'
+import { watch } from 'vue'
 
 export default {
   data() {
@@ -20,38 +20,41 @@ export default {
       code: '',
       socket: null,
       userId: 5 // TODO: Replace with actual user ID
-    };
+    }
   },
   computed: {
     state() {
-      return state;
+      return state
     }
   },
   mounted() {
-    this.initializeSocket();
-    watch(() => state.quizStarted, (newVal) => {
-      if (newVal) {
-        this.$router.push({ name: 'QuizPage' });
+    this.initializeSocket()
+    watch(
+      () => state.quizStarted,
+      (newVal) => {
+        if (newVal) {
+          this.$router.push({ name: 'QuizPage' })
+        }
       }
-    });
+    )
   },
   beforeUnmount() {
     if (this.$route.name !== 'QuizPage') {
-      socketFunctions.resetState();
-      socket.disconnect();
+      socketFunctions.resetState()
+      socket.disconnect()
     }
   },
   methods: {
     initializeSocket() {
-      socket.connect();
+      socket.connect()
     },
     joinQuiz() {
       if (this.code) {
-        socketFunctions.joinQuiz(this.code, this.userId);
+        socketFunctions.joinQuiz(this.code, this.userId)
       }
     }
   }
-};
+}
 </script>
 
 <style scoped>

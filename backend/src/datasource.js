@@ -12,6 +12,6 @@ export const sequelize = new Sequelize({
   port: process.env.DB_PORT,
   ssl: true,
   dialectOptions: {
-    clientMinMessages: 'notice',
+    clientMinMessages: "notice",
   },
 });

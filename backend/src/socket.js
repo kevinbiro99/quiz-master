@@ -6,12 +6,12 @@ export const initializeSocket = (server) => {
       origin: "http://localhost:5173",
       methods: ["GET", "POST"],
       credentials: true,
-    }
+    },
   });
 
-  io.on('connection', (socket) => {
-    console.log('New client connected', socket.id);
-    
+  io.on("connection", (socket) => {
+    console.log("New client connected", socket.id);
+
     socket.on("createRoom", (code) => {
       socket.join(code);
       io.to(code).emit("roomCreated", { code });
@@ -26,20 +26,18 @@ export const initializeSocket = (server) => {
       io.to(code).emit("userJoined", { code, userId });
     });
 
-    socket.on('startQuiz', (code, quizId) => {
-      io.to(code).emit('quizStarted', { quizId });
+    socket.on("startQuiz", (code, quizId) => {
+      io.to(code).emit("quizStarted", { quizId });
     });
 
-    socket.on('disconnect', () => {
-      console.log('Client disconnected');
+    socket.on("disconnect", () => {
+      console.log("Client disconnected");
     });
 
-    socket.on('selectAnswer', ({ code, answerIndex, userId, score }) => {
-      io.to(code).emit('answerSelected', { answerIndex, userId, score });
+    socket.on("selectAnswer", ({ code, answerIndex, userId, score }) => {
+      io.to(code).emit("answerSelected", { answerIndex, userId, score });
     });
   });
 
   return io;
 };
-
-

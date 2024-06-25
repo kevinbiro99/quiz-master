@@ -1,4 +1,4 @@
-import fetchWrapper from './fetch-wrapper';
+import fetchWrapper from './fetch-wrapper'
 
 export default {
   async getUsers() {
@@ -8,7 +8,7 @@ export default {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      credentials: 'include',
+      credentials: 'include'
     })
   },
 

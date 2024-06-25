@@ -29,7 +29,7 @@ const router = createRouter({
     { path: '/host', component: HostPage },
     { path: '/join', component: JoinPage },
     { path: '/host/:quizId', name: 'QuizHost', component: QuizHost },
-    { path: '/quiz/', name: 'QuizPage', component: QuizPage },
+    { path: '/quiz/', name: 'QuizPage', component: QuizPage }
   ]
 })
 

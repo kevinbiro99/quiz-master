@@ -3,15 +3,29 @@
     <h1>Host Quiz: {{ quizTitle }}</h1>
     <p>Socket-io connection: {{ state.connected }}</p>
     <div>
-      <button :class="{ disabled: state.roomCode.length > 0 } " :disabled="state.roomCode.length > 0" @click="startSession">Start Session</button>
+      <button
+        :class="{ disabled: state.roomCode.length > 0 }"
+        :disabled="state.roomCode.length > 0"
+        @click="startSession"
+      >
+        Start Session
+      </button>
       <div v-if="sessionCode">
         <p>Session Code: {{ sessionCode }}</p>
         <p>Room Created: {{ state.roomCode }}</p>
-        <button :class="{ disabled: state.participants.length < 1 } " :disabled="state.participants < 1" @click="startQuiz">Start Quiz</button>
+        <button
+          :class="{ disabled: state.participants.length < 1 }"
+          :disabled="state.participants < 1"
+          @click="startQuiz"
+        >
+          Start Quiz
+        </button>
         <div>
           <h3>Participants:</h3>
           <ul>
-            <li v-for="participant in state.participants" :key="participant.id">{{ participant.id }}</li>
+            <li v-for="participant in state.participants" :key="participant.id">
+              {{ participant.id }}
+            </li>
           </ul>
         </div>
       </div>
@@ -20,11 +34,11 @@
 </template>
 
 <script>
-import apiService from '../services/api-service';
-import { socket } from "@/socket";
-import { state } from "@/socket";
-import { socketFunctions } from "@/socket";
-import { watch } from "vue";
+import apiService from '../services/api-service'
+import { socket } from '@/socket'
+import { state } from '@/socket'
+import { socketFunctions } from '@/socket'
+import { watch } from 'vue'
 
 export default {
   data() {
@@ -33,52 +47,54 @@ export default {
       sessionCode: null,
       participants: [],
       userId: 5, // TODO: Replace with actual user ID
-      quizTitle: "Quiz Title"
-    };
+      quizTitle: 'Quiz Title'
+    }
   },
   computed: {
     state() {
-      return state;
+      return state
     }
   },
   mounted() {
-    this.quizId = this.$route.params.quizId;
+    this.quizId = this.$route.params.quizId
 
-    this.fetchQuiz();
-    watch(() => state.quizStarted, (newVal) => {
-      if (newVal) {
-        this.$router.push({ name: 'QuizPage' });
+    this.fetchQuiz()
+    watch(
+      () => state.quizStarted,
+      (newVal) => {
+        if (newVal) {
+          this.$router.push({ name: 'QuizPage' })
+        }
       }
-    });
+    )
   },
   beforeUnmount() {
     // TODO: prevent leaving the host page when a session is active
     // do the following if the next page loaded is not the QuizPage
     if (this.$route.name !== 'QuizPage') {
-      socketFunctions.resetState();
-      socket.disconnect();
+      socketFunctions.resetState()
+      socket.disconnect()
     }
   },
   methods: {
     async fetchQuiz() {
-      const {quiz, questions} = await apiService.getQuiz(this.userId, this.quizId);
-      this.quizTitle = quiz.title;
+      const { quiz, questions } = await apiService.getQuiz(this.userId, this.quizId)
+      this.quizTitle = quiz.title
     },
     startSession() {
-      socket.connect();
-      this.sessionCode = Math.random().toString(36).substr(2, 6).toUpperCase();
-      socketFunctions.createRoom(this.sessionCode);
+      socket.connect()
+      this.sessionCode = Math.random().toString(36).substr(2, 6).toUpperCase()
+      socketFunctions.createRoom(this.sessionCode)
     },
     startQuiz() {
       if (this.sessionCode && state.participants.length > 0) {
-        socketFunctions.startQuiz(this.sessionCode, this.quizId);
-      }
-      else {
-        alert('Cannot start quiz without participants');
+        socketFunctions.startQuiz(this.sessionCode, this.quizId)
+      } else {
+        alert('Cannot start quiz without participants')
       }
     }
   }
-};
+}
 </script>
 
 <style scoped>

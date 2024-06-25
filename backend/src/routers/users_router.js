@@ -95,7 +95,7 @@ usersRouter.get("/:id/quizzes/:quizId", async (req, res) => {
   }
   // Include questions in the response
   const questions = await Question.findAll({ where: { QuizId: quiz.id } });
-  return res.json({quiz: quiz, questions: questions});
+  return res.json({ quiz: quiz, questions: questions });
 });
 
 usersRouter.delete("/:id/", async (req, res) => {
