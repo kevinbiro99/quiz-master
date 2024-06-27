@@ -17,9 +17,9 @@ const fetchWrapper = (url, options = {}) => {
   }
 
   return fetch(`${API_URL}${url}`, mergedOptions).then((response) => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
+    // if (!response.ok) {
+    //   throw new Error(`HTTP error! Status: ${response.status}`)
+    // }
     return response.json()
   })
 }

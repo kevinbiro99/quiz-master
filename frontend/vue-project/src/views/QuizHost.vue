@@ -38,7 +38,7 @@ import apiService from '../services/api-service'
 import { socket } from '@/socket'
 import { state } from '@/socket'
 import { socketFunctions } from '@/socket'
-import { watch } from 'vue'
+import { inject, watch } from 'vue'
 
 export default {
   data() {
@@ -46,7 +46,7 @@ export default {
       quizId: 0,
       sessionCode: null,
       participants: [],
-      userId: 5, // TODO: Replace with actual user ID
+      authState: inject('authState'),
       quizTitle: 'Quiz Title'
     }
   },
@@ -78,7 +78,7 @@ export default {
   },
   methods: {
     async fetchQuiz() {
-      const { quiz, questions } = await apiService.getQuiz(this.userId, this.quizId)
+      const { quiz, questions } = await apiService.getQuiz(this.authState.userId, this.quizId)
       this.quizTitle = quiz.title
     },
     startSession() {

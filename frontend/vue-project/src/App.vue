@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import TheGreeting from './components/TheGreeting.vue'
+import ProfileComponent from './components/ProfileComponent.vue'
+import LogoutComponent from './components/LogoutComponent.vue'
 </script>
 
 <template>
   <header>
-    <img alt="Vue logo" class="logo" src="@/assets/idea.png" width="125" height="125" />
+    <div>
+      <img alt="Vue logo" class="logo" src="@/assets/idea.png" width="125" height="125" />
+      <ProfileComponent />
+      <LogoutComponent />
+    </div>
 
     <div class="wrapper">
       <TheGreeting msg="QuizMaster" />

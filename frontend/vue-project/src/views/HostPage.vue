@@ -6,15 +6,18 @@
         quiz.title
       }}</router-link>
     </div>
+    <p v-if="!this.authState.isAuthenticated">Must be logged in to host a quiz</p>
   </div>
 </template>
 
 <script>
 import apiService from '../services/api-service'
+import { inject } from 'vue'
 export default {
   data() {
     return {
-      quizzes: []
+      quizzes: [],
+      authState: inject('authState')
     }
   },
   mounted() {
@@ -22,8 +25,12 @@ export default {
   },
   methods: {
     async fetchQuizzes() {
-      const userId = 5 // Replace with actual user ID
-      this.quizzes = await apiService.getQuizzes(userId)
+      if (this.authState.userId > 0) {
+        apiService.getQuizzes(this.authState.userId).then((res) => {
+          if (res.error) this.quizzes = []
+          else this.quizzes = res
+        })
+      }
     }
   }
 }

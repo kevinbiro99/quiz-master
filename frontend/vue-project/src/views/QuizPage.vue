@@ -43,6 +43,7 @@
 import { socket, state } from '@/socket'
 import apiService from '@/services/api-service'
 import { socketFunctions } from '@/socket'
+import { inject } from 'vue'
 
 export default {
   data() {
@@ -63,7 +64,7 @@ export default {
       questionEnded: false,
       quizEnded: false,
       correctAnswer: 0, // Fetch the correct answer index from your API
-      userId: 5, // TODO: Replace with actual user ID
+      authState: inject('authState'),
       optionsMap: {
         option1: 0,
         option2: 1,
@@ -90,7 +91,7 @@ export default {
   methods: {
     async fetchQuiz() {
       this.quizId = state.quizId
-      const { quiz, questions } = await apiService.getQuiz(this.userId, this.quizId)
+      const { quiz, questions } = await apiService.getQuiz(this.authState.userId, this.quizId)
       this.quizTitle = quiz.title
       this.questions = questions
       this.loadNextQuestion()
@@ -137,7 +138,7 @@ export default {
       const score =
         (this.selectedAnswer === this.optionsMap[this.correctAnswer] ? 1 : 0) *
         (1 + this.answerTimeLeft)
-      socketFunctions.selectAnswer(this.userId, this.selectedAnswer, score)
+      socketFunctions.selectAnswer(this.authState.userId, this.selectedAnswer, score)
     },
     endQuestion() {
       if (this.quizQuestionIndex < this.questions.length - 1) {

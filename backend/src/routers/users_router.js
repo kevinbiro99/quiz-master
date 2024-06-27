@@ -3,26 +3,24 @@ import { User } from "../models/users.js";
 import { Quiz } from "../models/quizzes.js";
 import { Question } from "../models/questions.js";
 import { body, validationResult } from "express-validator";
+import { ensureAuthenticated } from "../middlewares/auth.js";
 
 export const usersRouter = Router();
 
-usersRouter.post("/register", async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const user = await User.create({ username, password });
-    res.json(user);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+usersRouter.get("/me", ensureAuthenticated, async (req, res) => {
+  return res.json(req.user);
 });
 
 usersRouter.get("/", async (req, res) => {
-  const users = await User.findAll();
+  const users = await User.findAll({
+    attributes: ["username", "id"],
+  });
   return res.json(users);
 });
 
 usersRouter.post(
   "/:id/quizzes",
+  ensureAuthenticated,
   [
     body("title").notEmpty().withMessage("Title is required"),
     body("questions")
@@ -81,7 +79,7 @@ usersRouter.post(
   },
 );
 
-usersRouter.get("/:id/quizzes", async (req, res) => {
+usersRouter.get("/:id/quizzes", ensureAuthenticated, async (req, res) => {
   const quizzes = await Quiz.findAll({ where: { UserId: req.params.id } });
   return res.json(quizzes);
 });
@@ -98,7 +96,7 @@ usersRouter.get("/:id/quizzes/:quizId", async (req, res) => {
   return res.json({ quiz: quiz, questions: questions });
 });
 
-usersRouter.delete("/:id/", async (req, res) => {
+usersRouter.delete("/:id/", ensureAuthenticated, async (req, res) => {
   const quizzes = await Quiz.findAll({ where: { UserId: req.params.id } });
   const quizIds = quizzes.map((quiz) => quiz.id);
   const questions = await Question.destroy({ where: { QuizId: quizIds } });
