@@ -8,6 +8,15 @@
   font-weight: normal;
 }
 
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.disabled:hover {
+  cursor: not-allowed;
+}
+
 a,
 .green {
   text-decoration: none;

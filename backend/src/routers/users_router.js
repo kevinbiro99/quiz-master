@@ -72,7 +72,7 @@ usersRouter.post(
           option3: question.option3,
           option4: question.option4,
           correctAnswer: question.correctAnswer,
-        })
+        }),
       );
 
       await Promise.all(questionPromises);
@@ -84,7 +84,7 @@ usersRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  }
+  },
 );
 
 usersRouter.post("/:id/temp/quizzes", async (req, res) => {
@@ -198,7 +198,9 @@ usersRouter.get("/:id/quizzes/:quizId", async (req, res) => {
   if (!quiz) {
     return res.status(404).json({ error: "Quiz not found" });
   }
-  return res.json(quiz);
+  // Include questions in the response
+  const questions = await Question.findAll({ where: { QuizId: quiz.id } });
+  return res.json({ quiz: quiz, questions: questions });
 });
 
 usersRouter.delete("/:id/", async (req, res) => {
