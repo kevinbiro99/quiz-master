@@ -15,7 +15,6 @@ export default {
     return {
       fileUploaded: false,
       invalidFile: false,
-      userId: 1 // TODO: Replace with actual user ID
     }
   },
   methods: {

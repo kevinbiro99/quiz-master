@@ -47,7 +47,6 @@ export default {
       sessionCode: null,
       participants: [],
       authState: inject('authState'),
-      userId: 1, // TODO: Replace with actual user ID
       quizTitle: 'Quiz Title'
     }
   },

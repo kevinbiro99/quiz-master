@@ -19,7 +19,6 @@ export default {
     return {
       quizzes: [],
       authState: inject('authState'),
-      userId: 1 // Replace with actual user ID
     }
   },
   mounted() {
