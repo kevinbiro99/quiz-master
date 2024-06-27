@@ -22,6 +22,7 @@ import LogoutComponent from './components/LogoutComponent.vue'
         <RouterLink to="/login">Login</RouterLink>
         <RouterLink to="/host">Host</RouterLink>
         <RouterLink to="/join">Join</RouterLink>
+        <RouterLink to="/upload">Upload</RouterLink>
       </nav>
     </div>
   </header>

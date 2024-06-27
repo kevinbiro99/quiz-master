@@ -65,6 +65,7 @@ export default {
       quizEnded: false,
       correctAnswer: 0, // Fetch the correct answer index from your API
       authState: inject('authState'),
+      userId: 1, // TODO: Replace with actual user ID
       optionsMap: {
         option1: 0,
         option2: 1,

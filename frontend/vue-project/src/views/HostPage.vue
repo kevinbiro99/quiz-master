@@ -5,6 +5,7 @@
       <router-link :to="{ name: 'QuizHost', params: { quizId: quiz.id } }">{{
         quiz.title
       }}</router-link>
+      <button @click="deleteQuiz(quiz.id)">Delete</button>
     </div>
     <p v-if="!this.authState.isAuthenticated">Must be logged in to host a quiz</p>
   </div>
@@ -17,7 +18,8 @@ export default {
   data() {
     return {
       quizzes: [],
-      authState: inject('authState')
+      authState: inject('authState'),
+      userId: 1 // Replace with actual user ID
     }
   },
   mounted() {
@@ -31,6 +33,11 @@ export default {
           else this.quizzes = res
         })
       }
+      this.quizzes = await apiService.getQuizzes(this.userId)
+    },
+    async deleteQuiz(quizId) {
+      await apiService.deleteQuiz(this.userId, quizId)
+      this.fetchQuizzes()
     }
   }
 }
