@@ -16,7 +16,7 @@ try {
   await sequelize.sync({ alter: { drop: false } });
   console.log(
     "Connection has been established successfully.",
-    sequelize.config
+    sequelize.config,
   );
 } catch (error) {
   console.error("Unable to connect to the database:", sequelize.config, error);

@@ -1,0 +1,53 @@
+Intro
+0:00
+view j/s it's a JavaScript framework for
+
+0:02
+building front-end UIs in view you can
+
+0:04
+start simple and then progressively add
+
+0:06
+in the tools and features that you need
+
+0:07
+to build a complex web application at
+
+0:10
+its core it provides a way to build
+
+0:11
+components that encapsulate data or
+
+Vuejs Components
+0:13
+state in your JavaScript and then
+
+0:15
+connect that state reactively to a
+
+0:17
+template in HTML we call these
+
+0:19
+components declarative views because the
+
+0:21
+same data inputs will always produce the
+
+0:23
+same output in the visual UI when we
+
+Vuejs Data
+0:25
+declare data on this data object it
+
+0:27
+links or binds it to the HTML on the
+
+0:29
+template above when the value of the
+
+0:30
+data changes the component will
