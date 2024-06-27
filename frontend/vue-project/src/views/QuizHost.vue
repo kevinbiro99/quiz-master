@@ -46,7 +46,7 @@ export default {
       quizId: 0,
       sessionCode: null,
       participants: [],
-      userId: 5, // TODO: Replace with actual user ID
+      userId: 1, // TODO: Replace with actual user ID
       quizTitle: 'Quiz Title'
     }
   },

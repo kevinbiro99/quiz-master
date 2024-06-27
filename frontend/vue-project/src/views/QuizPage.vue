@@ -63,7 +63,7 @@ export default {
       questionEnded: false,
       quizEnded: false,
       correctAnswer: 0, // Fetch the correct answer index from your API
-      userId: 5, // TODO: Replace with actual user ID
+      userId: 1, // TODO: Replace with actual user ID
       optionsMap: {
         option1: 0,
         option2: 1,

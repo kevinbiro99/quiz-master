@@ -16,6 +16,7 @@ import TheGreeting from './components/TheGreeting.vue'
         <RouterLink to="/login">Login</RouterLink>
         <RouterLink to="/host">Host</RouterLink>
         <RouterLink to="/join">Join</RouterLink>
+        <RouterLink to="/upload">Upload</RouterLink>
       </nav>
     </div>
   </header>

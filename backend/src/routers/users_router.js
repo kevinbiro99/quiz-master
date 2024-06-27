@@ -4,8 +4,20 @@ import { Quiz } from "../models/quizzes.js";
 import { Question } from "../models/questions.js";
 import { body, validationResult } from "express-validator";
 import { config } from "dotenv";
-import fs from "fs";
 import Groq from "groq-sdk";
+import multer from "multer";
+import fs from "fs";
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, "transcript.txt");
+  },
+});
+
+const upload = multer({ storage: storage });
 
 config();
 
@@ -87,19 +99,21 @@ usersRouter.post(
   },
 );
 
-usersRouter.post("/:id/temp/quizzes", async (req, res) => {
-  const id = req.params.id;
-  const link = req.body.link;
+usersRouter.post(
+  "/:id/quizzes/text",
+  upload.single("textFile"),
+  async (req, res) => {
+    const id = req.params.id;
+    const textFile = req.file;
 
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+    const errors = validationResult(req);
+    if (!errors.isEmpty() || !textFile) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-  try {
-    const filePath = "./assets/transcript-short.txt";
-    const fileContent = fs.readFileSync(filePath, "utf-8");
-    const prompt = `Generate a 4 choice quiz with the answer after each question along with timestamp that reveals the answer based on the transcript below. Follow this sample format:
+    try {
+      const fileContent = fs.readFileSync(textFile.path, "utf8");
+      const prompt = `Generate a 4 choice quiz with the answer after each question along with timestamp that reveals the answer based on the transcript below. Follow this sample format:
                     **title for quiz**
 
                     **question**
@@ -113,78 +127,100 @@ usersRouter.post("/:id/temp/quizzes", async (req, res) => {
                     **question**...
                     `;
 
-    const user = await User.findByPk(id);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
 
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt + fileContent,
-        },
-      ],
-      temperature: 0,
-      model: "llama3-8b-8192",
-    });
-
-    const response = chatCompletion.choices[0]?.message?.content || "";
-
-    if (response === "") {
-      return res.status(500).json({ error: "No response from GROQ" });
-    }
-
-    const title = response.split("\n")[0];
-    const quiz = await Quiz.create({ title, UserId: id });
-
-    const questionPromises = response
-      .split("\n\n")
-      .slice(1)
-      .map((question) => {
-        const lines = question.split("\n");
-
-        lines.forEach((line) => {
-          if (line === "") {
-            return;
-          }
-        });
-
-        if (lines.length < 8) {
-          return;
-        }
-
-        let answer = lines[6].split("**Answer**")[1];
-        if (answer[0].toLowerCase() === "a") {
-          answer = "option1";
-        } else if (answer[0].toLowerCase() === "b") {
-          answer = "option2";
-        } else if (answer[0].toLowerCase() === "c") {
-          answer = "option3";
-        } else if (answer[0].toLowerCase() === "d") {
-          answer = "option4";
-        }
-
-        Question.create({
-          QuizId: quiz.id,
-          text: lines[1],
-          option1: lines[2],
-          option2: lines[3],
-          option3: lines[4],
-          option4: lines[5],
-          correctAnswer: answer,
-          timestamp: lines[7],
-        });
+      const chatCompletion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: "user",
+            content: prompt + fileContent,
+          },
+        ],
+        temperature: 0,
+        model: "llama3-8b-8192",
       });
 
-    await Promise.all(questionPromises);
+      const response = chatCompletion.choices[0]?.message?.content || "";
 
-    return res.status(201).json({ message: "Quiz created successfully", quiz });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
+      if (response === "") {
+        return res.status(500).json({ error: "No response from GROQ" });
+      }
+
+      const title = response.split("\n")[0];
+      const quiz = await Quiz.create({ title, UserId: id });
+
+      const questionPromises = response
+        .split("\n\n")
+        .slice(1)
+        .map((question) => {
+          const lines = question.split("\n");
+
+          //TODO: output validation
+          lines.forEach((line) => {
+            if (line === "") {
+              return;
+            }
+          });
+
+          if (lines.length < 8) {
+            return;
+          }
+
+          let answer = lines[6].split(" ")[1].charAt(0).toLowerCase();
+          if (
+            answer !== "a" &&
+            answer !== "b" &&
+            answer !== "c" &&
+            answer !== "d"
+          ) {
+            return;
+          }
+
+          switch (answer) {
+            case "a":
+              answer = "option1";
+              break;
+            case "b":
+              answer = "option2";
+              break;
+            case "c":
+              answer = "option3";
+              break;
+            case "d":
+              answer = "option4";
+              break;
+          }
+
+          Question.create({
+            QuizId: quiz.id,
+            text: lines[1],
+            option1: lines[2],
+            option2: lines[3],
+            option3: lines[4],
+            option4: lines[5],
+            correctAnswer: answer,
+            timestamp: lines[7],
+          });
+        });
+
+      //TODO: Unhandled promise rejection
+      await Promise.all(questionPromises).catch((error) => {
+        console.error(error);
+        return res.status(500).json({ error: "Internal server error" });
+      });
+
+      return res
+        .status(201)
+        .json({ message: "Quiz created successfully", quiz });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
 
 usersRouter.get("/:id/quizzes", async (req, res) => {
   const quizzes = await Quiz.findAll({ where: { UserId: req.params.id } });
@@ -212,4 +248,23 @@ usersRouter.delete("/:id/", async (req, res) => {
   });
   const users = await User.destroy({ where: { id: req.params.id } });
   return res.json({ message: "User deleted successfully" });
+});
+
+usersRouter.delete("/:id/quizzes/:quizId", async (req, res) => {
+  try {
+    const quiz = await Quiz.findOne({
+      where: { id: req.params.quizId },
+    });
+
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+    const questions = await Question.destroy({ where: { QuizId: quiz.id } });
+    const quizDeleted = await Quiz.destroy({
+      where: { id: req.params.quizId },
+    });
+    return res.json({ message: "Quiz deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });

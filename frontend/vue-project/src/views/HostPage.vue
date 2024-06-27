@@ -5,6 +5,7 @@
       <router-link :to="{ name: 'QuizHost', params: { quizId: quiz.id } }">{{
         quiz.title
       }}</router-link>
+      <button @click="deleteQuiz(quiz.id)">Delete</button>
     </div>
   </div>
 </template>
@@ -14,7 +15,8 @@ import apiService from '../services/api-service'
 export default {
   data() {
     return {
-      quizzes: []
+      quizzes: [],
+      userId: 1 // Replace with actual user ID
     }
   },
   mounted() {
@@ -22,8 +24,11 @@ export default {
   },
   methods: {
     async fetchQuizzes() {
-      const userId = 5 // Replace with actual user ID
-      this.quizzes = await apiService.getQuizzes(userId)
+      this.quizzes = await apiService.getQuizzes(this.userId)
+    },
+    async deleteQuiz(quizId) {
+      await apiService.deleteQuiz(this.userId, quizId)
+      this.fetchQuizzes()
     }
   }
 }

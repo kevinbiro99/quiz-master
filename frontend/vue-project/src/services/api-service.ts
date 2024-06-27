@@ -41,5 +41,27 @@ export default {
         'Content-Type': 'application/json'
       }
     })
+  },
+
+  async deleteQuiz(userId, quizId) {
+    return await fetchWrapper(`/api/users/${userId}/quizzes/${quizId}`, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+  },
+
+  async createQuizFromTxt(userId, textFile) {
+    const formData = new FormData()
+    formData.append('textFile', textFile)
+    return await fetchWrapper(`/api/users/${userId}/quizzes/text`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json'
+      },
+      body: formData
+    })
   }
 }
