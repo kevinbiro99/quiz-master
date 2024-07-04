@@ -89,7 +89,7 @@ usersRouter.post(
           option3: question.option3,
           option4: question.option4,
           correctAnswer: question.correctAnswer,
-        })
+        }),
       );
 
       await Promise.all(questionPromises);
@@ -101,7 +101,7 @@ usersRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  }
+  },
 );
 
 usersRouter.post(
@@ -224,7 +224,7 @@ usersRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  }
+  },
 );
 
 usersRouter.get("/:id/quizzes", async (req, res) => {
