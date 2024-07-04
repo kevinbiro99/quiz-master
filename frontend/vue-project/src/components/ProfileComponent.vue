@@ -1,13 +1,6 @@
 <template>
-  <div
-    :class="{
-      'auth-status': true,
-      authenticated: authState.isAuthenticated,
-      'not-authenticated': !authState.isAuthenticated
-    }"
-  >
-    <p v-if="authState.isAuthenticated">Authenticated</p>
-    <p v-else>Not Authenticated</p>
+  <div>
+    <img src="@/assets/profile.png" alt="User Profile" class="profile-image" />
   </div>
 </template>
 
@@ -26,21 +19,10 @@ export default {
 </script>
 
 <style scoped>
-.auth-status {
-  margin: 20px;
-  padding: 10px;
-  border-radius: 5px;
-  text-align: center;
-  font-weight: bold;
-}
-
-.authenticated {
-  background-color: green;
-  color: white;
-}
-
-.not-authenticated {
-  background-color: red;
-  color: white;
+.profile-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin: 0.5rem;
 }
 </style>

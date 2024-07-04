@@ -8,6 +8,7 @@ import { config } from "dotenv";
 import Groq from "groq-sdk";
 import multer from "multer";
 import fs from "fs";
+import bcrypt from "bcrypt";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -26,6 +27,12 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 export const usersRouter = Router();
 
 usersRouter.get("/me", ensureAuthenticated, async (req, res) => {
+  if (req.session.username) {
+    const user = await User.findOne({
+      where: { username: req.session.username },
+    });
+    return res.json({ username: req.session.username, id: user.id });
+  }
   return res.json(req.user);
 });
 
@@ -82,7 +89,7 @@ usersRouter.post(
           option3: question.option3,
           option4: question.option4,
           correctAnswer: question.correctAnswer,
-        }),
+        })
       );
 
       await Promise.all(questionPromises);
@@ -94,7 +101,7 @@ usersRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  },
+  }
 );
 
 usersRouter.post(
@@ -217,7 +224,7 @@ usersRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  },
+  }
 );
 
 usersRouter.get("/:id/quizzes", async (req, res) => {
@@ -265,4 +272,55 @@ usersRouter.delete("/:id/quizzes/:quizId", async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: "Internal server error" });
   }
+});
+
+usersRouter.post("/signin", async (req, res) => {
+  const user = await User.findOne({
+    where: {
+      username: req.body.username,
+    },
+  });
+  if (user === null) {
+    return res.status(401).json({ error: "Incorrect username or password." });
+  }
+  // This user has signed up with Google
+  if (user.password === null) {
+    return res.status(401).json({ error: "Incorrect username or password." });
+  }
+
+  const hash = user.password;
+  const password = req.body.password;
+  const result = bcrypt.compareSync(password, hash);
+  if (!result) {
+    return res.status(401).json({ error: "Incorrect username or password." });
+  }
+
+  req.session.username = user.username;
+
+  return res.json({
+    success: "Sign in successful.",
+    user_id: user.id,
+  });
+});
+
+usersRouter.post("/signup", async (req, res) => {
+  const saltRounds = 10;
+  const salt = bcrypt.genSaltSync(saltRounds);
+  const password = bcrypt.hashSync(req.body.password, salt);
+
+  const user = User.build({
+    username: req.body.username,
+    googleId: null,
+    email: null,
+  });
+  user.password = password;
+  try {
+    await user.save();
+  } catch {
+    return res.status(422).json({ error: "User creation failed." });
+  }
+  return res.json({
+    success: "User created successfully.",
+    username: user.username,
+  });
 });

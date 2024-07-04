@@ -3,7 +3,7 @@ import LoginComponent from '../components/login/LoginComponent.vue'
 </script>
 
 <template>
-  <main>
+  <div class="main-content">
     <LoginComponent />
-  </main>
+  </div>
 </template>

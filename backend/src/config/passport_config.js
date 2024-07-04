@@ -20,6 +20,7 @@ passport.use(
             username: profile.displayName,
             googleId: profile.id,
             email: profile.emails[0].value,
+            password: null,
           });
         }
         console.log(user.toJSON());
@@ -27,8 +28,8 @@ passport.use(
       } catch (err) {
         return done(err, null);
       }
-    },
-  ),
+    }
+  )
 );
 
 passport.serializeUser((user, done) => {

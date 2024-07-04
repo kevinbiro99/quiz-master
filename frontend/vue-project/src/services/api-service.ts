@@ -2,8 +2,8 @@ import { environment } from '@/environments/environment'
 import fetchWrapper from './fetch-wrapper'
 
 export default {
-  async getUsers() {
-    return await fetchWrapper(`/api/users`, {
+  getUsers() {
+    return fetchWrapper(`/api/users`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -13,8 +13,8 @@ export default {
     })
   },
 
-  async signup(username, password) {
-    return await fetchWrapper(`/api/users/signup`, {
+  signup(username, password) {
+    return fetchWrapper(`/api/users/signup`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -24,15 +24,26 @@ export default {
     })
   },
 
-  async signin() {
+  signin(username, password) {
+    return fetchWrapper(`/api/users/signin`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    })
+  },
+
+  googleSignin() {
     return window.open(`${environment.apiEndpoint}/auth/google`, '_self')
   },
 
-  async signout() {
+  signout() {
     return fetchWrapper(`/auth/logout`)
   },
 
-  async me() {
+  me() {
     return fetchWrapper(`/api/users/me`)
   },
 

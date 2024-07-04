@@ -1,10 +1,11 @@
 <template>
-  <div>
+  <main class="main-content">
+    <h1>Upload a Quiz</h1>
     <input type="file" accept=".txt,.mp3" @change="handleFileUpload" />
     <button @click="submitFile">Submit</button>
     <p v-if="fileUploaded">File Uploaded!</p>
     <p v-if="invalidFile">Invalid file type</p>
-  </div>
+  </main>
 </template>
 
 <script>
@@ -14,7 +15,7 @@ export default {
   data() {
     return {
       fileUploaded: false,
-      invalidFile: false,
+      invalidFile: false
     }
   },
   methods: {

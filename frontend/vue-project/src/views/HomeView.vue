@@ -3,7 +3,7 @@ import TestComponent from '../components/test/TestComponent.vue'
 </script>
 
 <template>
-  <main>
+  <main class="main-content">
     <TestComponent />
   </main>
 </template>

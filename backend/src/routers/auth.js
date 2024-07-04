@@ -7,7 +7,7 @@ authRouter.get(
   "/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
-  }),
+  })
 );
 
 authRouter.get(
@@ -15,10 +15,11 @@ authRouter.get(
   passport.authenticate("google", {
     successRedirect: "http://localhost:5173",
     failureRedirect: "/login",
-  }),
+  })
 );
 
 authRouter.get("/logout", (req, res) => {
+  delete req.session.username;
   req.logout(function (err) {
     if (err) {
       return next(err);

@@ -1,95 +1,220 @@
 <script setup lang="ts">
+import { ref, inject, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import TheGreeting from './components/TheGreeting.vue'
 import ProfileComponent from './components/ProfileComponent.vue'
 import LogoutComponent from './components/LogoutComponent.vue'
+
+const authState = inject('authState')
+
+const showMenu = ref(false)
+const isMobile = ref(window.innerWidth <= 767)
+
+const toggleMenu = () => {
+  showMenu.value = !showMenu.value
+}
+
+const handleResize = () => {
+  isMobile.value = window.innerWidth <= 767
+  if (!isMobile.value) {
+    showMenu.value = false
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+})
 </script>
 
 <template>
   <header>
-    <div>
-      <img alt="Vue logo" class="logo" src="@/assets/idea.png" width="125" height="125" />
-      <ProfileComponent />
-      <LogoutComponent />
-    </div>
-
-    <div class="wrapper">
-      <TheGreeting msg="QuizMaster" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/credits">Credits</RouterLink>
-        <RouterLink to="/login">Login</RouterLink>
-        <RouterLink to="/host">Host</RouterLink>
-        <RouterLink to="/join">Join</RouterLink>
-        <RouterLink to="/upload">Upload</RouterLink>
+    <div class="navbar">
+      <RouterLink to="/" class="logo-title">
+        <img alt="Vue logo" class="logo" src="@/assets/idea.png" />
+        <span>QuizMaster</span>
+      </RouterLink>
+      <button class="menu-button" @click="toggleMenu">☰</button>
+      <nav :class="{ 'nav-open': showMenu }">
+        <RouterLink to="/" @click="toggleMenu">Home</RouterLink>
+        <RouterLink to="/credits" @click="toggleMenu">Credits</RouterLink>
+        <RouterLink to="/login" v-if="!authState.isAuthenticated" @click="toggleMenu"
+          >Login</RouterLink
+        >
+        <RouterLink to="/join" @click="toggleMenu">Join</RouterLink>
+        <RouterLink to="/host" v-if="authState.isAuthenticated" @click="toggleMenu"
+          >Host</RouterLink
+        >
+        <RouterLink to="/upload" v-if="authState.isAuthenticated" @click="toggleMenu"
+          >Upload</RouterLink
+        >
       </nav>
+      <div v-if="authState.isAuthenticated" class="profile">
+        <ProfileComponent />
+        <LogoutComponent />
+      </div>
     </div>
   </header>
 
-  <RouterView />
+  <div id="content">
+    <div class="greeting-container">
+      <TheGreeting msg="Welcome to QuizMaster" />
+    </div>
+    <main>
+      <RouterView />
+    </main>
+  </div>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+@import './assets/main.css';
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  width: 100%;
+  border-radius: 10px;
+  background: linear-gradient(to right, var(--vt-c-green-soft), var(--vt-c-black-mute));
+  border-bottom: 1px solid var(--color-border);
+}
+
+.logo-title {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  padding: 0.5rem;
 }
 
 .logo {
-  display: block;
-  margin: 0 auto 2rem;
+  width: 50px;
+  height: 50px;
+  margin-right: 0.5rem;
+}
+
+.menu-button {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: none;
 }
 
 nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
-
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
 }
 
 nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
+  padding: 0.5rem 1rem;
+  color: var(--color-text);
+  text-decoration: none;
+  border: 2px solid var(--color-border);
+  border-radius: 20px;
+  margin: 0.5rem 0.5rem;
+  transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
-nav a:first-of-type {
-  border: 0;
+nav a:hover,
+nav a:active {
+  background-color: var(--color-highlight);
+  transform: scale(1.05);
+}
+
+.nav-open {
+  max-height: 500px;
+  opacity: 1;
+}
+
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  min-height: 70vh;
+}
+
+.greeting-container {
+  padding: 2rem;
+  margin: 1rem;
+  border-radius: 15px;
+  animation: fadeIn 1s ease-in-out;
 }
 
 @media (min-width: 1024px) {
-  header {
+  body {
     display: flex;
     place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
+    justify-content: center;
   }
 
-  .logo {
-    margin: 0 2rem 0 0;
+  #content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0 2rem;
   }
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
+  /* .greeting-container,
+  main {
+    grid-column: span 2;
+  } */
+}
+
+@media (min-width: 767px) {
+  .menu-button {
+    display: none;
   }
 
   nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
+    flex-direction: row;
+    max-height: none;
+    opacity: 1;
+  }
 
-    padding: 1rem 0;
-    margin-top: 1rem;
+  nav a {
+    border: 2px solid var(--color-border);
+    width: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .navbar {
+    flex-direction: column;
+  }
+  .menu-button {
+    display: block;
+  }
+
+  nav.nav-open {
+    max-height: 500px;
+    opacity: 1;
+  }
+
+  #content {
+    padding: 0;
+  }
+
+  .greeting-container {
+    padding: 1rem;
   }
 }
 </style>

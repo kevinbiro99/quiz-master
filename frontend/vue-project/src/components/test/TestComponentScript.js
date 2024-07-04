@@ -3,7 +3,7 @@ import api from '@/services/api-service'
 export default {
   data() {
     return {
-      message: '',
+      users: [],
       error: ''
     }
   },
@@ -13,8 +13,9 @@ export default {
   methods: {
     async fetchMessage() {
       try {
-        const response = await api.getUsers()
-        this.message = response
+        api.getUsers().then((response) => {
+          this.users = response
+        })
       } catch (error) {
         this.error = error
         console.error('Error fetching message:', error)

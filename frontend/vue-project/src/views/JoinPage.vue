@@ -1,16 +1,12 @@
 <template>
-  <div>
+  <main class="main-content">
     <h1>Join a Quiz</h1>
-    <div v-if="this.authState.isAuthenticated">
-      <p v-if="state.error">Error: {{ state.error }}</p>
-      <p v-if="state.roomCode">Joined Room: {{ state.roomCode }}</p>
-      <input v-if="!state.roomCode" type="text" v-model="code" placeholder="Enter Quiz Code" />
-      <button v-if="!state.roomCode" @click="joinQuiz">Join Quiz</button>
-    </div>
-    <div v-else>
-      <p>Must be logged in to join a quiz</p>
-    </div>
-  </div>
+    <p v-if="state.error">Error: {{ state.error }}</p>
+    <p v-if="state.roomCode">Joined Room: {{ state.roomCode }}</p>
+    <input v-if="!state.roomCode" type="text" v-model="code" placeholder="Enter Quiz Code" />
+    <input v-if="!state.roomCode" type="text" v-model="username" placeholder="Optional: Username" />
+    <button v-if="!state.roomCode" @click="joinQuiz">Join Quiz</button>
+  </main>
 </template>
 
 <script>
@@ -24,6 +20,7 @@ export default {
   data() {
     return {
       code: '',
+      username: null,
       socket: null,
       authState: inject('authState')
     }
