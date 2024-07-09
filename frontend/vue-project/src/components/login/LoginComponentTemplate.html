@@ -1,5 +1,6 @@
-<div class="login-container">
+<div class="container">
   <h2>Login to QuizMaster</h2>
+  <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
   <form @submit.prevent="handleLogin(actionType)">
     <div class="form-group">
       <input
@@ -8,6 +9,7 @@
         v-model="username"
         placeholder="Enter your username here"
         required
+        autocomplete="on"
       />
       <input
         type="password"
@@ -15,16 +17,16 @@
         v-model="password"
         placeholder="Enter your password here"
         required
+        autocomplete="on"
       />
     </div>
     <div class="button-group">
-      <button type="submit" @click="setActionType('signin')" class="btn-submit">Sign-in</button>
-      <button type="submit" @click="setActionType('signup')" class="btn-submit">Sign-up</button>
+      <button type="submit" @click="setActionType('signin')" class="btn">Sign-in</button>
+      <button type="submit" @click="setActionType('signup')" class="btn">Sign-up</button>
     </div>
   </form>
   <div class="or-divider">
     <span>OR</span>
   </div>
   <button @click="handleGoogleLogin" class="btn-google">Login with Google</button>
-  <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 </div>

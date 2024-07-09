@@ -5,6 +5,7 @@ import JoinPage from '../views/JoinPage.vue'
 import QuizHost from '../views/QuizHost.vue'
 import QuizPage from '../views/QuizPage.vue'
 import UploadPage from '../views/UploadPage.vue'
+import AuthSuccess from '../views/AuthSuccess.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,7 +32,8 @@ const router = createRouter({
     { path: '/join', component: JoinPage },
     { path: '/host/:quizId', name: 'QuizHost', component: QuizHost },
     { path: '/quiz/', name: 'QuizPage', component: QuizPage },
-    { path: '/upload/', name: 'UploadPage', component: UploadPage }
+    { path: '/upload/', name: 'UploadPage', component: UploadPage },
+    { path: '/auth-success', name: 'AuthSuccess', component: AuthSuccess }
   ]
 })
 

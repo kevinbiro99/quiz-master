@@ -1,32 +1,32 @@
 import './assets/main.css'
 
-import { createApp, reactive } from 'vue'
+import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
-import apiService from './services/api-service'
+import { useAuthStore } from '@/stores/index'
 
 const app = createApp(App)
 
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
 
-export const authState = reactive({
-  isAuthenticated: false,
-  userId: -1
-})
+// Sync session storage with store state on app created
+app.mixin({
+  created() {
+    const authStore = useAuthStore()
+    const sessionAuthState = sessionStorage.getItem('authState')
+    const savedAuthState = sessionAuthState ? JSON.parse(sessionAuthState) : null
+    if (savedAuthState) {
+      authStore.setAuthState(savedAuthState)
+    }
 
-apiService.me().then((res) => {
-  if (res.error) {
-    authState.isAuthenticated = false
-    authState.userId = -1
-  } else {
-    authState.isAuthenticated = true
-    authState.userId = res.id
+    authStore.$subscribe((mutation, state) => {
+      sessionStorage.setItem('authState', JSON.stringify(state))
+    })
   }
 })
-
-app.provide('authState', authState)
 
 app.mount('#app')

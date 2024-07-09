@@ -1,165 +1,332 @@
 <template>
-  <div>
-    <h1>{{ quizTitle }}</h1>
-    <div v-if="!questionEnded">
+  <div class="quiz-container">
+    <h1>{{ state.title }} : {{ state.questionIndex + 1 + '/' + state.numQuestions }}</h1>
+    <div v-if="!questionEnded" class="question-container">
       <h2>{{ currentQuestion.text }}</h2>
-      <div
-        v-for="(choice, index) in currentQuestion.choices"
-        :key="index"
-        @click="selectAnswer(index)"
-        :class="{ selected: selectedAnswer === index }"
-      >
-        {{ choice }}
+      <div class="timer-bar-container">
+        <div class="timer-bar" :style="{ width: timeBarWidth + '%' }"></div>
       </div>
-      <p>Time left: {{ timeLeft }} seconds</p>
+      <div class="choices-container">
+        <div
+          v-for="(choice, index) in currentQuestion.choices"
+          :key="index"
+          @click="selectAnswer(index)"
+          :class="{
+            selected: selectedAnswer === index,
+            locked: isAnswered && selectedAnswer !== index
+          }"
+          class="choice-box"
+        >
+          {{ choice }}
+        </div>
+      </div>
     </div>
-    <div v-else>
+    <div class="results" v-else>
       <h2>Question Results</h2>
-      <div
-        v-for="(choice, index) in currentQuestion.choices"
-        :key="index"
-        :class="{
-          selected: selectedAnswer === index,
-          correct: index === optionsMap[correctAnswer]
-        }"
-      >
-        {{ choice }}: {{ state.answerCounts[index] }} votes
+      <div class="results-container">
+        <div
+          v-for="(choice, index) in currentQuestion.choices"
+          :key="index"
+          class="result-outline"
+          :style="{ backgroundColor: index === optionsMap[correctAnswer] ? '#00bd7e' : '#333' }"
+        >
+          <div class="result-label">{{ choice }}</div>
+          <div class="result-count">{{ state.answerCounts[index] }}</div>
+          <div class="result-bar"></div>
+        </div>
+      </div>
+      <div v-if="isHost && !quizEnded">
+        <button class="btn" @click="endQuestion">Next Question</button>
       </div>
     </div>
     <div v-if="quizEnded">
-      <h2>Quiz Ended</h2>
-      <router-link to="/">Back to Home</router-link>
+      <h2 class="title">Quiz Ended</h2>
+      <router-link class="btn" to="/">Back to Home</router-link>
     </div>
-    <div>
-      <h2>Leaderboard</h2>
-      <div v-for="participant in sortedParticipants" :key="participant.id">
-        {{ participant.id }}: {{ participant.score }}
-      </div>
-    </div>
+    <LeaderBoardComponent />
   </div>
 </template>
 
-<script>
-import { socket, state } from '@/socket'
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { socket, state as socketState } from '@/socket'
 import apiService from '@/services/api-service'
 import { socketFunctions } from '@/socket'
-import { inject } from 'vue'
+import { useAuthStore } from '@/stores/index'
+import LeaderBoardComponent from '@/components/LeaderboardComponent.vue'
 
-export default {
-  data() {
-    return {
-      quizId: 0,
-      quizQuestionIndex: -1,
-      questions: [],
-      quizTitle: '',
-      currentQuestion: {
-        text: 'Sample Question?',
-        choices: ['Choice 1', 'Choice 2', 'Choice 3', 'Choice 4']
-      },
-      selectedAnswer: null, // The index of the option picked by the user
-      isAnswered: false, // Whether the user has picked an answer
-      answerTimeLeft: 1, // How much time the user has left after answering
-      timePerQuiz: 10,
-      timeLeft: this.timePerQuiz,
-      questionEnded: false,
-      quizEnded: false,
-      correctAnswer: 0, // Fetch the correct answer index from your API
-      authState: inject('authState'),
-      optionsMap: {
-        option1: 0,
-        option2: 1,
-        option3: 2,
-        option4: 3
-      }
+// Define reactive state variables
+const quizId = ref(0)
+const quizQuestionIndex = ref(-1)
+const questions = ref([])
+const currentQuestion = ref({
+  text: 'Sample Question?',
+  choices: ['Choice 1', 'Choice 2', 'Choice 3', 'Choice 4']
+})
+const selectedAnswer = ref(null)
+const isAnswered = ref(false)
+const answerTimeLeft = ref(1)
+const timePerQuiz = ref(10)
+const timeLeft = ref(timePerQuiz.value)
+const questionEnded = ref(false)
+const quizEnded = ref(false)
+const correctAnswer = ref(0)
+const optionsMap = {
+  option1: 0,
+  option2: 1,
+  option3: 2,
+  option4: 3
+}
+
+// Auth store
+const authState = useAuthStore()
+
+// Computed properties
+const state = computed(() => socketState)
+const isHost = computed(() => questions.value.length > 0)
+const timeBarWidth = computed(() => (timeLeft.value / timePerQuiz.value) * 100)
+const maxVotes = computed(() => Math.max(...state.value.answerCounts, 1)) // Avoid division by zero
+
+// Lifecycle hooks
+onMounted(() => {
+  fetchQuiz()
+})
+
+onBeforeUnmount(() => {
+  socket.disconnect()
+})
+
+watch(
+  () => state.value.question,
+  (newVal) => {
+    if (newVal) {
+      console.log(state)
+      loadNextQuestion()
     }
-  },
-  computed: {
-    state() {
-      return state
-    },
-    sortedParticipants() {
-      return [...state.participants].sort((a, b) => b.score - a.score)
-    }
-  },
-  mounted() {
-    this.fetchQuiz()
-  },
-  beforeUnmount() {
-    socketFunctions.resetState()
-    socket.disconnect()
-  },
-  methods: {
-    async fetchQuiz() {
-      this.quizId = state.quizId
-      const { quiz, questions } = await apiService.getQuiz(this.authState.userId, this.quizId)
-      this.quizTitle = quiz.title
-      this.questions = questions
-      this.loadNextQuestion()
-    },
-    loadNextQuestion() {
-      this.quizQuestionIndex++
-      const question = this.questions[this.quizQuestionIndex]
-      this.currentQuestion.text = question.text
-      this.currentQuestion.choices = [
-        question.option1,
-        question.option2,
-        question.option3,
-        question.option4
-      ]
-      this.correctAnswer = question.correctAnswer
-      this.selectedAnswer = null
-      this.answerTimeLeft = 1
-      this.isAnswered = false
-      this.timeLeft = this.timePerQuiz
-      this.questionEnded = false
-      this.startTimer()
-    },
-    startTimer() {
-      const timer = setInterval(() => {
-        if (this.timeLeft > 0) {
-          this.timeLeft--
-        } else {
-          clearInterval(timer)
-          this.questionEnded = true
-          this.startTimerBetweenQuestions()
-        }
-      }, 1000)
-    },
-    startTimerBetweenQuestions() {
-      setTimeout(() => {
-        this.endQuestion()
-      }, 5000)
-    },
-    selectAnswer(index) {
-      if (this.isAnswered) return
-      this.isAnswered = true
-      this.selectedAnswer = index
-      this.answerTimeLeft = this.timeLeft
-      const score =
-        (this.selectedAnswer === this.optionsMap[this.correctAnswer] ? 1 : 0) *
-        (1 + this.answerTimeLeft)
-      socketFunctions.selectAnswer(this.authState.userId, this.selectedAnswer, score)
-    },
-    endQuestion() {
-      if (this.quizQuestionIndex < this.questions.length - 1) {
-        socketFunctions.endQuestion()
-        this.loadNextQuestion()
+  }
+)
+
+// Methods
+const fetchQuiz = () => {
+  quizId.value = state.value.quizId
+  try {
+    apiService.getQuiz(authState.userId, quizId.value).then((res) => {
+      if (res.error) {
+        // Not the host of the quiz
+        console.error('Error fetching quiz:', res.error)
+        waitForQuestion()
       } else {
-        this.quizEnded = true
-        socket.disconnect()
+        questions.value = res.questions
+        socketFunctions.broadcastQuizInfo(res.quiz.title, res.questions.length)
+        broadcastQuestion()
       }
+    })
+  } catch (error) {
+    console.error('Error fetching quiz:', error)
+  }
+}
+
+const broadcastQuestion = () => {
+  quizQuestionIndex.value++
+  if (quizQuestionIndex.value >= questions.value.length) {
+    quizEnded.value = true
+    return
+  }
+  const question = questions.value[quizQuestionIndex.value]
+  // TODO: Remove correctAnswer from question object
+  const questionWithoutAnswer = {
+    text: question.text,
+    option1: question.option1,
+    option2: question.option2,
+    option3: question.option3,
+    option4: question.option4,
+    correctAnswer: question.correctAnswer
+  }
+  socketFunctions.broadcastQuestion(questionWithoutAnswer, quizQuestionIndex.value)
+}
+
+const loadNextQuestion = () => {
+  const question = state.value.question
+  currentQuestion.value.text = question.text
+  currentQuestion.value.choices = [
+    question.option1,
+    question.option2,
+    question.option3,
+    question.option4
+  ]
+  correctAnswer.value = question.correctAnswer
+  selectedAnswer.value = null
+  answerTimeLeft.value = 1
+  isAnswered.value = false
+  timeLeft.value = timePerQuiz.value
+  questionEnded.value = false
+  state.value.answerCounts = [0, 0, 0, 0] // Reset answer counts
+  startTimer()
+}
+
+const startTimer = () => {
+  const timer = setInterval(() => {
+    if (timeLeft.value > 0) {
+      timeLeft.value--
+    } else {
+      clearInterval(timer)
+      questionEnded.value = true
+      revealCorrectAnswer()
     }
+  }, 1000)
+}
+
+const revealCorrectAnswer = () => {
+  if (state.value.questionIndex >= state.value.numQuestions - 1) {
+    quizEnded.value = true
+    state.value.quizStarted = false
+  }
+  setTimeout(() => {
+    const resultBars = document.querySelectorAll('.result-bar')
+    resultBars.forEach((bar, index) => {
+      bar.style.width = `${Math.max(0.01, state.value.answerCounts[index] / maxVotes.value) * 75}%`
+    })
+  }, 500)
+}
+
+const selectAnswer = (index) => {
+  if (isAnswered.value) return
+  isAnswered.value = true
+  selectedAnswer.value = index
+  answerTimeLeft.value = timeLeft.value
+  const score =
+    (selectedAnswer.value === optionsMap[correctAnswer.value] ? 1 : 0) *
+    (1 + answerTimeLeft.value) *
+    100
+  socketFunctions.selectAnswer(selectedAnswer.value, score)
+}
+
+const endQuestion = () => {
+  if (quizQuestionIndex.value < questions.value.length - 1) {
+    socketFunctions.endQuestion()
+    broadcastQuestion()
+  } else {
+    quizEnded.value = true
+    socket.disconnect()
   }
 }
 </script>
 
 <style scoped>
-.selected {
-  color: black;
-  background-color: yellow;
+.quiz-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
 }
-.correct {
-  color: black;
-  background-color: green;
+
+.question-container {
+  text-align: center;
+  width: 100%;
+  height: 50%;
+  margin-bottom: 20px;
+  display: grid;
+}
+
+.timer-bar-container {
+  justify-content: center;
+  align-items: center;
+  height: 20px;
+  width: auto;
+  margin: 0 10px;
+}
+
+.timer-bar {
+  height: 100%;
+  background-color: #00bd7e;
+  transition: width 1s linear;
+  border-radius: 10px;
+  animation: flow 5s infinite;
+}
+
+@keyframes flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.choices-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin: 20px;
+  height: 70%;
+}
+
+.choice-box {
+  padding: 20px;
+  background-color: #333;
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  flex: 1 1 calc(50% - 40px);
+  text-align: center;
+  transition: transform 0.3s;
+}
+
+.choice-box.selected {
+  background-color: #00bd7e;
+}
+
+.choice-box.locked {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.results-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 20px;
+}
+
+.results {
+  width: 100%;
+}
+
+.result-outline {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 5px;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.result-label {
+  width: 20%;
+  text-align: left;
+  font-size: 1em;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.result-count {
+  font-size: 1em;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.result-bar {
+  height: 20px;
+  background-color: var(--color-text);
+  border-radius: 5px;
+  transition: width 1s ease-in-out;
+  margin-left: 10px;
+  width: 1%;
+}
+
+.btn {
+  width: 80%;
 }
 </style>

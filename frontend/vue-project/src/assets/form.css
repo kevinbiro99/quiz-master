@@ -1,0 +1,16 @@
+@import './base.css';
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 25px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: var(--color-text);
+  background-color: var(--color-background);
+}

@@ -1,23 +1,26 @@
 <template>
-  <button class="logout" @click="logout">Logout</button>
+  <button class="logout" :disabled="isQuizPage" @click="logout">Logout</button>
 </template>
 
 <script>
-import { inject } from 'vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import apiService from '@/services/api-service'
+import { checkAuthStatus } from '@/utils/auth'
+import { state } from '@/socket'
 
 export default {
   name: 'LogoutButton',
   setup() {
-    const authState = inject('authState')
+    const route = useRoute()
+    const isQuizPage = computed(() => route.name === 'QuizPage' && state.quizStarted)
 
     const logout = () => {
+      if (isQuizPage.value) return
+
       try {
         apiService.signout().then(() => {
-          apiService.me().then((res) => {
-            if (res.error) authState.isAuthenticated = false
-            else authState.isAuthenticated = true
-          })
+          checkAuthStatus()
         })
       } catch (error) {
         console.error('Error during logout', error)
@@ -25,7 +28,8 @@ export default {
     }
 
     return {
-      logout
+      logout,
+      isQuizPage
     }
   }
 }
@@ -43,5 +47,11 @@ export default {
 
 .logout:hover {
   background-color: #d32f2f;
+}
+
+.logout:disabled {
+  background-color: #f44336;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

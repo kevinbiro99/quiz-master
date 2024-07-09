@@ -1,11 +1,11 @@
 <template>
-  <main class="main-content">
-    <h1>Upload a Quiz</h1>
+  <div class="main-content container">
+    <h2>Upload a Quiz</h2>
     <input type="file" accept=".txt,.mp3" @change="handleFileUpload" />
     <button @click="submitFile">Submit</button>
     <p v-if="fileUploaded">File Uploaded!</p>
     <p v-if="invalidFile">Invalid file type</p>
-  </main>
+  </div>
 </template>
 
 <script>

@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { ref, inject, onMounted, onBeforeUnmount } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router'
 import TheGreeting from './components/TheGreeting.vue'
 import ProfileComponent from './components/ProfileComponent.vue'
 import LogoutComponent from './components/LogoutComponent.vue'
+import { useAuthStore } from '@/stores/index'
+import { checkAuthStatus } from '@/utils/auth'
+import { state } from '@/socket'
 
-const authState = inject('authState')
+const authStore = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 
 const showMenu = ref(false)
 const isMobile = ref(window.innerWidth <= 767)
+const showGreeting = ref(true)
 
 const toggleMenu = () => {
   showMenu.value = !showMenu.value
@@ -21,7 +27,26 @@ const handleResize = () => {
   }
 }
 
+const confirmNavigation = (to: any, from: any, next: any) => {
+  if (from.name === 'QuizPage' && state.quizStarted) {
+    if (confirm('Are you sure you want to navigate away? You will leave the quiz.')) {
+      next()
+    } else {
+      next(false)
+    }
+  } else {
+    next()
+  }
+}
+
+router.beforeEach(confirmNavigation)
+
+watch(route, (newRoute) => {
+  showGreeting.value = newRoute.name !== 'QuizPage'
+})
+
 onMounted(() => {
+  checkAuthStatus()
   window.addEventListener('resize', handleResize)
 })
 
@@ -33,37 +58,68 @@ onBeforeUnmount(() => {
 <template>
   <header>
     <div class="navbar">
-      <RouterLink to="/" class="logo-title">
+      <RouterLink
+        to="/"
+        class="logo-title"
+        :class="{ disabled: route.name === 'QuizPage' && state.quizStarted }"
+      >
         <img alt="Vue logo" class="logo" src="@/assets/idea.png" />
         <span>QuizMaster</span>
       </RouterLink>
       <button class="menu-button" @click="toggleMenu">☰</button>
       <nav :class="{ 'nav-open': showMenu }">
-        <RouterLink to="/" @click="toggleMenu">Home</RouterLink>
-        <RouterLink to="/credits" @click="toggleMenu">Credits</RouterLink>
-        <RouterLink to="/login" v-if="!authState.isAuthenticated" @click="toggleMenu"
+        <RouterLink
+          to="/"
+          @click="toggleMenu"
+          :class="{ disabled: route.name === 'QuizPage' && state.quizStarted }"
+          >Home</RouterLink
+        >
+        <RouterLink
+          to="/credits"
+          @click="toggleMenu"
+          :class="{ disabled: route.name === 'QuizPage' && state.quizStarted }"
+          >Credits</RouterLink
+        >
+        <RouterLink
+          to="/login"
+          v-if="!authStore.isAuthenticated"
+          @click="toggleMenu"
+          :class="{ disabled: route.name === 'QuizPage' && state.quizStarted }"
           >Login</RouterLink
         >
-        <RouterLink to="/join" @click="toggleMenu">Join</RouterLink>
-        <RouterLink to="/host" v-if="authState.isAuthenticated" @click="toggleMenu"
+        <RouterLink
+          to="/join"
+          @click="toggleMenu"
+          :class="{ disabled: route.name === 'QuizPage' && state.quizStarted }"
+          >Join</RouterLink
+        >
+        <RouterLink
+          to="/host"
+          v-if="authStore.isAuthenticated"
+          @click="toggleMenu"
+          :class="{ disabled: route.name === 'QuizPage' && state.quizStarted }"
           >Host</RouterLink
         >
-        <RouterLink to="/upload" v-if="authState.isAuthenticated" @click="toggleMenu"
+        <RouterLink
+          to="/upload"
+          v-if="authStore.isAuthenticated"
+          @click="toggleMenu"
+          :class="{ disabled: route.name === 'QuizPage' && state.quizStarted }"
           >Upload</RouterLink
         >
       </nav>
-      <div v-if="authState.isAuthenticated" class="profile">
+      <div v-if="authStore.isAuthenticated" class="profile">
         <ProfileComponent />
         <LogoutComponent />
       </div>
     </div>
   </header>
 
-  <div id="content">
-    <div class="greeting-container">
+  <div id="content" :class="{ 'quiz-mode': route.name === 'QuizPage' }">
+    <div v-if="showGreeting" class="greeting-container">
       <TheGreeting msg="Welcome to QuizMaster" />
     </div>
-    <main>
+    <main :class="{ 'full-screen': !showGreeting }">
       <RouterView />
     </main>
   </div>
@@ -164,6 +220,18 @@ nav a:active {
   animation: fadeIn 1s ease-in-out;
 }
 
+.full-screen {
+  width: 100%;
+  min-height: 70vh;
+  padding: 0;
+  margin: 0;
+}
+
+.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 @media (min-width: 1024px) {
   body {
     display: flex;
@@ -172,15 +240,13 @@ nav a:active {
   }
 
   #content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
+    padding: 2rem;
   }
 
-  /* .greeting-container,
-  main {
-    grid-column: span 2;
-  } */
+  #content:not(.quiz-mode) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (min-width: 767px) {
@@ -214,7 +280,7 @@ nav a:active {
   }
 
   #content {
-    padding: 0;
+    padding: 0.5rem;
   }
 
   .greeting-container {

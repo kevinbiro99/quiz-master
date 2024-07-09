@@ -5,16 +5,8 @@
 </template>
 
 <script>
-import { inject } from 'vue'
-
 export default {
-  name: 'ProfileComponent',
-  setup() {
-    const authState = inject('authState')
-    return {
-      authState
-    }
-  }
+  name: 'ProfileComponent'
 }
 </script>
 

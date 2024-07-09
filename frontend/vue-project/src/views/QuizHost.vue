@@ -1,100 +1,87 @@
 <template>
-  <div>
-    <h1>Host Quiz: {{ quizTitle }}</h1>
-    <p>Socket-io connection: {{ state.connected }}</p>
+  <div class="main-content container">
+    <h2>Host Quiz: {{ quizTitle }}</h2>
     <div>
       <button
+        v-if="state.roomCode.length < 1"
         :class="{ disabled: state.roomCode.length > 0 }"
         :disabled="state.roomCode.length > 0"
         @click="startSession"
       >
         Start Session
       </button>
-      <div v-if="sessionCode">
-        <p>Session Code: {{ sessionCode }}</p>
+      <div v-if="state.roomCode.length > 0">
         <p>Room Created: {{ state.roomCode }}</p>
         <button
           :class="{ disabled: state.participants.length < 1 }"
-          :disabled="state.participants < 1"
+          :disabled="state.participants.length < 1"
           @click="startQuiz"
         >
           Start Quiz
         </button>
-        <div>
-          <h3>Participants:</h3>
-          <ul>
-            <li v-for="participant in state.participants" :key="participant.id">
-              {{ participant.id }}
-            </li>
-          </ul>
-        </div>
+        <ParticipantsComponent />
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import apiService from '../services/api-service'
-import { socket } from '@/socket'
-import { state } from '@/socket'
-import { socketFunctions } from '@/socket'
-import { inject, watch } from 'vue'
+import { socket, state, socketFunctions } from '@/socket'
+import { useAuthStore } from '@/stores/index'
+import ParticipantsComponent from '@/components/ParticipantsComponent.vue'
 
-export default {
-  data() {
-    return {
-      quizId: 0,
-      sessionCode: null,
-      participants: [],
-      authState: inject('authState'),
-      quizTitle: 'Quiz Title'
-    }
-  },
-  computed: {
-    state() {
-      return state
-    }
-  },
-  mounted() {
-    this.quizId = this.$route.params.quizId
+const route = useRoute()
+const router = useRouter()
+const authState = useAuthStore()
 
-    this.fetchQuiz()
-    watch(
-      () => state.quizStarted,
-      (newVal) => {
-        if (newVal) {
-          this.$router.push({ name: 'QuizPage' })
-        }
-      }
-    )
-  },
-  beforeUnmount() {
-    // TODO: prevent leaving the host page when a session is active
-    // do the following if the next page loaded is not the QuizPage
-    if (this.$route.name !== 'QuizPage') {
-      socketFunctions.resetState()
-      socket.disconnect()
-    }
-  },
-  methods: {
-    async fetchQuiz() {
-      const { quiz, questions } = await apiService.getQuiz(this.authState.userId, this.quizId)
-      this.quizTitle = quiz.title
-    },
-    startSession() {
-      socket.connect()
-      this.sessionCode = Math.random().toString(36).substr(2, 6).toUpperCase()
-      socketFunctions.createRoom(this.sessionCode)
-    },
-    startQuiz() {
-      if (this.sessionCode && state.participants.length > 0) {
-        socketFunctions.startQuiz(this.sessionCode, this.quizId)
-      } else {
-        alert('Cannot start quiz without participants')
-      }
-    }
+const quizId = ref(0)
+const quizTitle = ref('Quiz Title')
+
+const fetchQuiz = async () => {
+  quizId.value = route.params.quizId
+
+  const res = await apiService.getQuiz(authState.userId, quizId.value)
+  if (res.error) {
+    console.error(res.error)
+  } else {
+    quizTitle.value = res.quiz.title
   }
 }
+
+const startSession = () => {
+  socket.connect()
+  socketFunctions.createRoom(authState.username)
+}
+
+const startQuiz = () => {
+  if (state.roomCode.length > 0 && state.participants.length > 0) {
+    socketFunctions.startQuiz(state.roomCode, quizId.value)
+  } else {
+    alert('Cannot start quiz without participants')
+  }
+}
+
+watch(
+  () => state.quizStarted,
+  (newVal) => {
+    if (newVal) {
+      router.push({ name: 'QuizPage' })
+    }
+  }
+)
+
+onMounted(() => {
+  fetchQuiz()
+})
+
+onBeforeUnmount(() => {
+  if (route.name !== 'QuizPage') {
+    socket.disconnect()
+  }
+})
 </script>
 
 <style scoped>
@@ -109,25 +96,20 @@ button {
   padding: 10px 20px;
   margin: 10px 0;
   cursor: pointer;
+  border-radius: 25px;
+  transition: background-color 0.3s ease;
 }
 
 button:hover {
   background-color: #008c63;
 }
 
+button.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 p {
   color: #969f96;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  background-color: #969f96;
-  margin: 5px 0;
-  padding: 10px;
-  color: #fff;
 }
 </style>

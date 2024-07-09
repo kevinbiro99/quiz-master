@@ -47,8 +47,8 @@ export default {
     return fetchWrapper(`/api/users/me`)
   },
 
-  async getQuizzes(userId) {
-    return await fetchWrapper(`/api/users/${userId}/quizzes`, {
+  getQuizzes(userId) {
+    return fetchWrapper(`/api/users/${userId}/quizzes`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -57,8 +57,8 @@ export default {
     })
   },
 
-  async getQuiz(userId, quizId) {
-    return await fetchWrapper(`/api/users/${userId}/quizzes/${quizId}`, {
+  getQuiz(userId, quizId) {
+    return fetchWrapper(`/api/users/${userId}/quizzes/${quizId}`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -67,8 +67,8 @@ export default {
     })
   },
 
-  async deleteQuiz(userId, quizId) {
-    return await fetchWrapper(`/api/users/${userId}/quizzes/${quizId}`, {
+  deleteQuiz(userId, quizId) {
+    return fetchWrapper(`/api/users/${userId}/quizzes/${quizId}`, {
       method: 'DELETE',
       headers: {
         Accept: 'application/json',
