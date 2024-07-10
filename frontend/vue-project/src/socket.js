@@ -14,7 +14,8 @@ export const state = reactive({
   question: '',
   numQuestions: 0,
   questionIndex: 0,
-  title: ''
+  title: '',
+  hostConnected: false
 })
 
 const URL = environment.apiEndpoint
@@ -48,7 +49,8 @@ export const socketFunctions = {
       (state.question = ''),
       (state.numQuestions = 0),
       (state.questionIndex = 0),
-      (state.title = '')
+      (state.title = ''),
+      (state.hostConnected = false)
   },
   selectAnswer(answerIndex, score) {
     socket.emit('selectAnswer', {
@@ -84,6 +86,7 @@ socket.on('roomNotFound', () => {
 
 socket.on('roomCreated', ({ code }) => {
   state.roomCode = code
+  state.hostConnected = true
 })
 
 socket.on('connect', () => {
@@ -91,7 +94,15 @@ socket.on('connect', () => {
 })
 
 socket.on('disconnect', () => {
+  console.log('Disconnected')
+  if (state.hostConnected) {
+    socket.emit('hostDisconnected', state.roomCode)
+  }
   socketFunctions.resetState()
+  state.connected = false
+})
+
+socket.on('hostLeft', () => {
   state.connected = false
 })
 

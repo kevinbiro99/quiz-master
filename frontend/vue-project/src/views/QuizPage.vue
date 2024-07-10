@@ -1,5 +1,6 @@
 <template>
-  <div class="quiz-container">
+  <div v-loading="isLoading" class="quiz-container">
+    <ConnectionLostComponent :visible="!state.connected" />
     <h1>{{ state.title }} : {{ state.questionIndex + 1 + '/' + state.numQuestions }}</h1>
     <div v-if="!questionEnded" class="question-container">
       <h2>{{ currentQuestion.text }}</h2>
@@ -54,6 +55,7 @@ import apiService from '@/services/api-service'
 import { socketFunctions } from '@/socket'
 import { useAuthStore } from '@/stores/index'
 import LeaderBoardComponent from '@/components/LeaderboardComponent.vue'
+import ConnectionLostComponent from '@/components/ConnectionLostComponent.vue'
 
 // Define reactive state variables
 const quizId = ref(0)
@@ -77,6 +79,7 @@ const optionsMap = {
   option3: 2,
   option4: 3
 }
+const isLoading = ref(false)
 
 // Auth store
 const authState = useAuthStore()
@@ -93,6 +96,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  isLoading.value = false
   socket.disconnect()
 })
 
@@ -100,7 +104,7 @@ watch(
   () => state.value.question,
   (newVal) => {
     if (newVal) {
-      console.log(state)
+      isLoading.value = false
       loadNextQuestion()
     }
   }
@@ -110,11 +114,11 @@ watch(
 const fetchQuiz = () => {
   quizId.value = state.value.quizId
   try {
+    isLoading.value = true
     apiService.getQuiz(authState.userId, quizId.value).then((res) => {
       if (res.error) {
         // Not the host of the quiz
         console.error('Error fetching quiz:', res.error)
-        waitForQuestion()
       } else {
         questions.value = res.questions
         socketFunctions.broadcastQuizInfo(res.quiz.title, res.questions.length)
@@ -202,6 +206,7 @@ const selectAnswer = (index) => {
 }
 
 const endQuestion = () => {
+  isLoading.value = true
   if (quizQuestionIndex.value < questions.value.length - 1) {
     socketFunctions.endQuestion()
     broadcastQuestion()
@@ -214,6 +219,7 @@ const endQuestion = () => {
 
 <style scoped>
 .quiz-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;

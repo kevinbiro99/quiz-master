@@ -1,5 +1,5 @@
 <template>
-  <div class="main-content container">
+  <div v-loading="isLoading" class="main-content container">
     <h2>Host a Quiz</h2>
     <p v-if="!this.authState.isAuthenticated">Must be logged in to host a quiz</p>
     <div v-else>
@@ -23,11 +23,17 @@
 <script>
 import apiService from '../services/api-service'
 import { useAuthStore } from '@/stores/index'
+import { vLoading } from '/src/directives/LoadingDirective.js'
+import { ref } from 'vue'
 
 export default {
+  directives: {
+    loading: vLoading
+  },
   setup() {
     const authState = useAuthStore()
-    return { authState }
+    const isLoading = ref(false)
+    return { authState, isLoading }
   },
   data() {
     return {
@@ -37,15 +43,22 @@ export default {
   mounted() {
     this.fetchQuizzes()
   },
+  onBeforeUnmount() {
+    this.isLoading = false
+  },
   methods: {
     fetchQuizzes() {
+      this.isLoading = true
       apiService.getQuizzes(this.authState.userId).then((res) => {
+        this.isLoading = false
         if (res.error) this.quizzes = []
         else this.quizzes = res
       })
     },
     deleteQuiz(quizId) {
+      this.isLoading = true
       apiService.deleteQuiz(this.authState.userId, quizId).then((res) => {
+        this.isLoading = false
         if (res.error) console.error(res.error)
         else this.fetchQuizzes()
       })

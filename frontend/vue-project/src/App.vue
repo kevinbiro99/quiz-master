@@ -15,6 +15,7 @@ const router = useRouter()
 const showMenu = ref(false)
 const isMobile = ref(window.innerWidth <= 767)
 const showGreeting = ref(true)
+const isLoading = ref(false)
 
 const toggleMenu = () => {
   showMenu.value = !showMenu.value
@@ -28,6 +29,7 @@ const handleResize = () => {
 }
 
 const confirmNavigation = (to: any, from: any, next: any) => {
+  isLoading.value = true
   if (from.name === 'QuizPage' && state.quizStarted) {
     if (confirm('Are you sure you want to navigate away? You will leave the quiz.')) {
       next()
@@ -39,6 +41,9 @@ const confirmNavigation = (to: any, from: any, next: any) => {
   }
 }
 
+router.afterEach(() => {
+  isLoading.value = false
+})
 router.beforeEach(confirmNavigation)
 
 watch(route, (newRoute) => {
@@ -51,6 +56,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  isLoading.value = false
   window.removeEventListener('resize', handleResize)
 })
 </script>
@@ -115,7 +121,7 @@ onBeforeUnmount(() => {
     </div>
   </header>
 
-  <div id="content" :class="{ 'quiz-mode': route.name === 'QuizPage' }">
+  <div v-loading="isLoading" id="content" :class="{ 'quiz-mode': route.name === 'QuizPage' }">
     <div v-if="showGreeting" class="greeting-container">
       <TheGreeting msg="Welcome to QuizMaster" />
     </div>
@@ -206,6 +212,7 @@ nav a:active {
 }
 
 #content {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;

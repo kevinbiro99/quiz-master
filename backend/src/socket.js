@@ -104,6 +104,10 @@ export const initializeSocket = (server) => {
     socket.on("broadcastQuizInfo", ({ code, numQuestions, title }) => {
       io.to(code).emit("quizInfoBroadcasted", { title, numQuestions });
     });
+
+    socket.on("hostDisconnected", (code) => {
+      io.to(code).emit("hostLeft");
+    });
   });
 
   return io;

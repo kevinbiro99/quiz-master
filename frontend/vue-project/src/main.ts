@@ -6,8 +6,11 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { useAuthStore } from '@/stores/index'
+import { vLoading } from '@/directives/LoadingDirective.js'
 
 const app = createApp(App)
+
+app.directive('loading', vLoading)
 
 const pinia = createPinia()
 app.use(pinia)

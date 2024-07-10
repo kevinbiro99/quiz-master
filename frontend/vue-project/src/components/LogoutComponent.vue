@@ -1,24 +1,35 @@
 <template>
-  <button class="logout" :disabled="isQuizPage" @click="logout">Logout</button>
+  <button v-loading="isLoading" class="logout" :disabled="isQuizPage" @click="logout">
+    Logout
+  </button>
 </template>
 
 <script>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import apiService from '@/services/api-service'
 import { checkAuthStatus } from '@/utils/auth'
 import { state } from '@/socket'
+import { vLoading } from '/src/directives/LoadingDirective.js'
 
 export default {
   name: 'LogoutButton',
+  directives: {
+    loading: vLoading
+  },
+  onBeforeUnmount() {
+    this.isLoading.value = false
+  },
   setup() {
     const route = useRoute()
     const isQuizPage = computed(() => route.name === 'QuizPage' && state.quizStarted)
+    const isLoading = ref(false)
 
     const logout = () => {
       if (isQuizPage.value) return
 
       try {
+        isLoading.value = true
         apiService.signout().then(() => {
           checkAuthStatus()
         })
@@ -29,7 +40,8 @@ export default {
 
     return {
       logout,
-      isQuizPage
+      isQuizPage,
+      isLoading
     }
   }
 }
@@ -37,6 +49,7 @@ export default {
 
 <style scoped>
 .logout {
+  position: relative;
   background-color: #f44336;
   color: white;
   border: none;
