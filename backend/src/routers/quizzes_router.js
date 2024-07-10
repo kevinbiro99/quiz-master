@@ -80,10 +80,10 @@ const extractQuestions = (response) => {
   const questions = [];
   let question = { text: "", options: [], answer: "", timestamp: "" };
   let index = 0;
-  const questionPattern = /^\*\*\s*question\s*[0-9]*\)?:?\*\*/i;
+  const questionPattern = /^\*\*\s*question\s*[0-9]*\)?:?/i;
   const choicePattern = /^\*\*\s*choice\s*[abcd]\)?:?\s*\*\*/i;
   const answerPatterns = [
-    /^\*\*\s*answer\s*\*\*\s*[abcd]\)?:?/i,
+    /^\*\*\s*answer\s*:?\)?\s*\*\*\s*[abcd]\)?:?/i,
     /^\*\*\s*answer\s*[abcd]\)?:?\s*\*\*/i,
     /\*\*\s*choice\s*[abcd]\)?:?\s*\*\*/i,
   ];
@@ -95,24 +95,28 @@ const extractQuestions = (response) => {
     if (!lines[i].includes("**")) continue;
 
     temp = lines[i];
-    if (i + 1 < lines.length && !lines[i + 1].includes("**")) {
+    if (
+      i + 1 < lines.length &&
+      !lines[i + 1].includes("**") &&
+      (index !== 0 || lines[i + 1].includes("?"))
+    ) {
       temp += " " + lines[i + 1];
     }
 
     if (questionPattern.test(temp)) {
-      question.text = temp.split("**")[2].trim();
+      question.text = temp.split(questionPattern)[1].replace("**", "").trim();
     } else if (choicePattern.test(temp)) {
       question.options.push(temp);
     } else if (timestampPattern.test(temp)) {
       question.timestamp = temp;
+    } else {
+      answerPatterns.map((pattern) => {
+        let string = pattern.exec(temp);
+        if (string !== null) {
+          question.answer = string[0].split(" ")[1];
+        }
+      });
     }
-
-    answerPatterns.map((pattern) => {
-      let string = pattern.exec(temp);
-      if (string !== null) {
-        question.answer = string[0].split(" ")[1];
-      }
-    });
 
     index += 1;
     if (index >= 7) {
@@ -253,19 +257,18 @@ quizzesRouter.post(
         return res.status(404).json({ error: "User not found" });
       }
 
-      const audioFilePath = "uploads/output.mp3";
-      ffmpeg(videoFile.path)
-        .output(audioFilePath)
-        .on("end", () => {
-          console.log("Finished converting video to audio");
-        })
-        .on("error", (err) => {
-          console.error(err);
-        })
-        .run();
+      const audioFilePath = "assets/output.mp3";
+      await new Promise((resolve, reject) => {
+        ffmpeg(videoFile.path)
+          .output(audioFilePath)
+          .on("end", resolve)
+          .on("error", reject)
+          .run();
+      });
 
       const transcript = await transcribeAudio(audioFilePath);
       const response = await transcriptGPT(transcript);
+      console.log(response);
       const { title, questions } = extractQuestions(response);
       const quiz = await createQuiz(id, title, questions);
 
