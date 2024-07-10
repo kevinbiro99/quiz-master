@@ -9,10 +9,10 @@ import multer from "multer";
 import fs from "fs";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegStatic from "ffmpeg-static";
-import { mkdirSync, existsSync } from 'fs';
+import { mkdirSync, existsSync } from "fs";
 
 // Ensure upload directory exists
-const uploadDir = 'uploads/';
+const uploadDir = "uploads/";
 if (!existsSync(uploadDir)) {
   mkdirSync(uploadDir);
 }
@@ -378,4 +378,5 @@ quizzesRouter.delete(
       where: { id: req.params.quizId },
     });
     return res.json({ message: "Quiz deleted successfully" });
-  });
+  },
+);
