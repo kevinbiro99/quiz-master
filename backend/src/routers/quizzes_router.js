@@ -9,6 +9,13 @@ import multer from "multer";
 import fs from "fs";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegStatic from "ffmpeg-static";
+import { mkdirSync, existsSync } from 'fs';
+
+// Ensure upload directory exists
+const uploadDir = 'uploads/';
+if (!existsSync(uploadDir)) {
+  mkdirSync(uploadDir);
+}
 
 ffmpeg.setFfmpegPath(ffmpegStatic);
 
