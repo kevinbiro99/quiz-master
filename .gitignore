@@ -8,3 +8,5 @@ db
 .npm
 .eslintcache
 .vscode/
+.dockerignore
+backend/assets/output.mp3

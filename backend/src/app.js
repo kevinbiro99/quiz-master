@@ -1,5 +1,6 @@
 import cors from "cors";
 import { usersRouter } from "./routers/users_router.js";
+import { quizzesRouter } from "./routers/quizzes_router.js";
 import { authRouter } from "./routers/auth.js";
 import { sequelize } from "./datasource.js";
 import express from "express";
@@ -47,6 +48,7 @@ try {
 }
 
 app.use("/api/users", usersRouter);
+app.use("/api/users", quizzesRouter);
 app.use("/auth", authRouter);
 
 const PORT = 3000;
