@@ -87,5 +87,29 @@ export default {
       },
       body: formData
     })
+  },
+
+  async createQuizFromAudio(userId, audioFile) {
+    const formData = new FormData()
+    formData.append('audioFile', audioFile)
+    return await fetchWrapper(`/api/users/${userId}/quizzes/audio`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json'
+      },
+      body: formData
+    })
+  },
+
+  async createQuizFromVideo(userId, videoFile) {
+    const formData = new FormData()
+    formData.append('videoFile', videoFile)
+    return await fetchWrapper(`/api/users/${userId}/quizzes/video`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json'
+      },
+      body: formData
+    })
   }
 }

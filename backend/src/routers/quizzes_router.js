@@ -1,0 +1,316 @@
+import { Router } from "express";
+import { User } from "../models/users.js";
+import { Quiz } from "../models/quizzes.js";
+import { Question } from "../models/questions.js";
+import { body, validationResult } from "express-validator";
+import { config } from "dotenv";
+import Groq from "groq-sdk";
+import multer from "multer";
+import fs from "fs";
+import ffmpeg from "fluent-ffmpeg";
+import ffmpegStatic from "ffmpeg-static";
+
+ffmpeg.setFfmpegPath(ffmpegStatic);
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    const fileExt = file.originalname.split(".").pop();
+    const filename = `${new Date().getTime()}.${fileExt}`;
+    cb(null, filename);
+  },
+});
+
+const upload = multer({ storage: storage });
+
+config();
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+export const quizzesRouter = Router();
+
+const transcriptGPT = async (fileContent) => {
+  const prompt = `Generate a 4 choice quiz with the answer after each question along with timestamp that reveals the answer based on the transcript below. Follow this sample format:
+                    **title for quiz**
+
+                    **question**
+                    **choice a**
+                    **choice b**
+                    **choice c**
+                    **choice d**
+                    **answer**
+                    **timestamp**
+
+                    **question**...
+                    `;
+
+  const chatCompletion = await groq.chat.completions.create({
+    messages: [
+      {
+        role: "user",
+        content: prompt + fileContent,
+      },
+    ],
+    temperature: 0,
+    model: "llama3-8b-8192",
+  });
+
+  const response = chatCompletion.choices[0]?.message?.content || "";
+
+  if (response === "") {
+    return res.status(500).json({ error: "No response from GROQ" });
+  }
+
+  return response;
+};
+
+/* Assumptions:
+  - First line of every resposne is title
+  - Every question has at least a question, 4 choices, 
+    an answer, and timestamp, in that order with each occupying 1 or 2 lines
+  - ** is used to indicate the start of a question, choice, answer, or 
+    timestamp
+  - If correct answer cannot be extracted, first choice is assumed to be
+    correct
+*/
+const extractQuestions = (response) => {
+  const lines = response.split("\n");
+  const title = lines[0];
+  const questions = [];
+  let question = { text: "", options: [], answer: "", timestamp: "" };
+  let index = 0;
+  const questionPattern = /^\*\*\s*question\s*[0-9]*\)?:?\*\*/i;
+  const choicePattern = /^\*\*\s*choice\s*[abcd]\)?:?\s*\*\*/i;
+  const answerPatterns = [
+    /^\*\*\s*answer\s*\*\*\s*[abcd]\)?:?/i,
+    /^\*\*\s*answer\s*[abcd]\)?:?\s*\*\*/i,
+    /\*\*\s*choice\s*[abcd]\)?:?\s*\*\*/i,
+  ];
+  const timestampPattern = /^\*\*\s*timestamp/i;
+  const choices = ["a", "b", "c", "d"];
+
+  for (let i = 1; i < lines.length; i++) {
+    let temp = "";
+    if (!lines[i].includes("**")) continue;
+
+    temp = lines[i];
+    if (i + 1 < lines.length && !lines[i + 1].includes("**")) {
+      temp += " " + lines[i + 1];
+    }
+
+    if (questionPattern.test(temp)) {
+      question.text = temp.split("**")[2].trim();
+    } else if (choicePattern.test(temp)) {
+      question.options.push(temp);
+    } else if (timestampPattern.test(temp)) {
+      question.timestamp = temp;
+    }
+
+    answerPatterns.map((pattern) => {
+      let string = pattern.exec(temp);
+      if (string !== null) {
+        question.answer = string[0].split(" ")[1];
+      }
+    });
+
+    index += 1;
+    if (index >= 7) {
+      choices.map((choice) => {
+        if (question.answer.toLowerCase().includes(choice)) {
+          question.answer = "option" + (choices.indexOf(choice) + 1);
+        }
+      });
+      questions.push(question);
+      question = { text: "", options: [], answer: "", timestamp: "" };
+      index = 0;
+    }
+  }
+  return { title, questions };
+};
+
+const transcribeAudio = async (audioFile) => {
+  const transcription = await groq.audio.transcriptions.create({
+    file: fs.createReadStream(audioFile),
+    model: "whisper-large-v3",
+    response_format: "verbose_json", // Optional
+    language: "en", // Optional
+    temperature: 0.0, // Optional
+  });
+
+  const content = transcription.segments
+    .map((segment) => "(" + segment.start + ")\n" + segment.text + "\n\n")
+    .join("");
+  return content;
+};
+
+const createQuiz = async (id, title, questions) => {
+  const quiz = await Quiz.create({ title, UserId: id });
+
+  const questionPromises = questions.map((question) =>
+    Question.create({
+      QuizId: quiz.id,
+      text: question.text,
+      option1: question.options[0],
+      option2: question.options[1],
+      option3: question.options[2],
+      option4: question.options[3],
+      correctAnswer: question.answer,
+      timestamp: question.timestamp,
+    }),
+  );
+
+  //TODO: Unhandled promise rejection
+  await Promise.all(questionPromises).catch((error) => {
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error" });
+  });
+
+  return quiz;
+};
+
+quizzesRouter.post(
+  "/:id/quizzes/text",
+  upload.single("textFile"),
+  async (req, res) => {
+    const id = req.params.id;
+    const textFile = req.file;
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty() || !textFile) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const fileContent = fs.readFileSync(req.file.path, "utf8");
+      const response = await transcriptGPT(fileContent);
+      const { title, questions } = extractQuestions(response);
+      const quiz = await createQuiz(id, title, questions);
+
+      return res
+        .status(201)
+        .json({ message: "Quiz created successfully", quiz });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
+
+quizzesRouter.post(
+  "/:id/quizzes/audio",
+  upload.single("audioFile"),
+  async (req, res) => {
+    const id = req.params.id;
+    const audioFile = req.file;
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty() || !audioFile) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const transcript = await transcribeAudio(audioFile);
+      const response = await transcriptGPT(transcript);
+      const { title, questions } = extractQuestions(response);
+      const quiz = await createQuiz(id, title, questions);
+
+      return res
+        .status(201)
+        .json({ message: "Quiz created successfully", quiz });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
+
+quizzesRouter.post(
+  "/:id/quizzes/video",
+  upload.single("videoFile"),
+  async (req, res) => {
+    const id = req.params.id;
+    const videoFile = req.file;
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty() || !videoFile) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const audioFilePath = "uploads/output.mp3";
+      ffmpeg(videoFile.path)
+        .output(audioFilePath)
+        .on("end", () => {
+          console.log("Finished converting video to audio");
+        })
+        .on("error", (err) => {
+          console.error(err);
+        })
+        .run();
+
+      const transcript = await transcribeAudio(audioFilePath);
+      const response = await transcriptGPT(transcript);
+      const { title, questions } = extractQuestions(response);
+      const quiz = await createQuiz(id, title, questions);
+
+      return res
+        .status(201)
+        .json({ message: "Quiz created successfully", quiz });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
+
+quizzesRouter.get("/:id/quizzes", async (req, res) => {
+  const quizzes = await Quiz.findAll({ where: { UserId: req.params.id } });
+  return res.json(quizzes);
+});
+
+quizzesRouter.get("/:id/quizzes/:quizId", async (req, res) => {
+  const quiz = await Quiz.findOne({
+    where: { id: req.params.quizId, UserId: req.params.id },
+  });
+  if (!quiz) {
+    return res.status(404).json({ error: "Quiz not found" });
+  }
+  // Include questions in the response
+  const questions = await Question.findAll({ where: { QuizId: quiz.id } });
+  return res.json({ quiz: quiz, questions: questions });
+});
+
+quizzesRouter.delete("/:id/quizzes/:quizId", async (req, res) => {
+  try {
+    const quiz = await Quiz.findOne({
+      where: { id: req.params.quizId },
+    });
+
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+    const questions = await Question.destroy({ where: { QuizId: quiz.id } });
+    const quizDeleted = await Quiz.destroy({
+      where: { id: req.params.quizId },
+    });
+    return res.json({ message: "Quiz deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
