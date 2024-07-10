@@ -10,6 +10,7 @@ import fs from "fs";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegStatic from "ffmpeg-static";
 import { mkdirSync, existsSync } from "fs";
+import { ensureAuthenticated } from "../middlewares/auth.js";
 
 // Ensure upload directory exists
 const uploadDir = "uploads/";

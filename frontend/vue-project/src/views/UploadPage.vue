@@ -10,16 +10,19 @@
 
 <script>
 import apiService from '@/services/api-service'
-import { inject } from 'vue'
+import { useAuthStore } from '@/stores/index'
 
 export default {
   data() {
     return {
       fileUploaded: false,
       invalidFile: false,
-      file: null,
-      authState: inject('authState')
+      file: null
     }
+  },
+  setup() {
+    const authState = useAuthStore()
+    return { authState }
   },
   methods: {
     handleFileUpload(event) {
