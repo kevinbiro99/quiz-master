@@ -93,17 +93,9 @@ socket.on('connect', () => {
   state.connected = true
 })
 
-socket.on('disconnect', () => {
-  console.log('Disconnected')
-  if (state.hostConnected) {
-    socket.emit('hostDisconnected', state.roomCode)
-  }
-  socketFunctions.resetState()
-  state.connected = false
-})
-
 socket.on('hostLeft', () => {
   state.connected = false
+  state.quizStarted = false
 })
 
 socket.on('userJoined', ({ code, username }) => {

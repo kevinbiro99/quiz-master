@@ -32,6 +32,7 @@ export const initializeSocket = (server) => {
         return generateUniqueCode();
       });
       socket.username = username;
+      socket.isHost = true;
       socket.join(code);
       io.to(code).emit("roomCreated", { code });
       io.to(code).emit("userJoined", { code, username });
@@ -57,6 +58,7 @@ export const initializeSocket = (server) => {
 
         // Set the username on the socket
         socket.username = username;
+        socket.isHost = false;
 
         socket.join(code);
 
@@ -81,11 +83,15 @@ export const initializeSocket = (server) => {
       io.to(code).emit("quizStarted", { quizId });
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnecting", () => {
       console.log("Client disconnected");
-      const rooms = Array.from(socket.rooms).slice(1); // exclude socket's own room
+      const rooms = Array.from(socket.rooms).slice(1);
       rooms.forEach((room) => {
         const roomUsers = io.sockets.adapter.rooms.get(room);
+        if (socket.isHost) {
+          // Notify other users that the host has left
+          io.to(room).emit("hostLeft");
+        }
         if (roomUsers && roomUsers.size === 1) {
           // if last user leaving
           existingCodes.delete(room);
