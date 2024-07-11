@@ -10,6 +10,18 @@
         Colour palette used on this website is from
         <a href="https://coolors.co/" target="_blank" rel="noopener noreferrer">coolors.co</a>.
       </p>
+      <p>
+        GPT code from
+        <a href="https://console.groq.com/" target="_blank" rel="noopener noreferrer"
+          >flaticon</a
+        >.
+      </p>
+      <p>
+        Video player code and css from
+        <a href="https://videojs.com/" target="_blank" rel="noopener noreferrer">
+          flaticon</a
+        >.
+      </p>
     </div>
   </div>
 </template>

@@ -84,10 +84,11 @@ const transcriptGPT = async (fileContent) => {
 */
 const extractQuestions = (response) => {
   const lines = response.split("\n");
-  const title = lines[0];
+  const title = lines[0].replaceAll("**", "").trim();
   const questions = [];
-  let question = { text: "", options: [], answer: "", timestamp: "" };
   let index = 0;
+  let question = { text: "", options: [], answer: "", timestamp: 0 };
+
   const questionPattern = /^\*\*\s*question\s*[0-9]*\)?:?/i;
   const choicePattern = /^\*\*\s*choice\s*[abcd]\)?:?\s*\*\*/i;
   const answerPatterns = [
@@ -101,32 +102,45 @@ const extractQuestions = (response) => {
   for (let i = 1; i < lines.length; i++) {
     let temp = "";
     if (!lines[i].includes("**")) continue;
+    index = 0;
+    for (index; i < lines.length && index < 7; i++, index++) {
+      temp = lines[i];
+      if (
+        i + 1 < lines.length &&
+        !lines[i + 1].includes("**") &&
+        (index !== 0 || lines[i + 1].includes("?"))
+      ) {
+        temp += " " + lines[i + 1];
+        i++;
+      }
 
-    temp = lines[i];
-    if (
-      i + 1 < lines.length &&
-      !lines[i + 1].includes("**") &&
-      (index !== 0 || lines[i + 1].includes("?"))
-    ) {
-      temp += " " + lines[i + 1];
-    }
-
-    if (questionPattern.test(temp)) {
-      question.text = temp.split(questionPattern)[1].replace("**", "").trim();
-    } else if (choicePattern.test(temp)) {
-      question.options.push(temp);
-    } else if (timestampPattern.test(temp)) {
-      question.timestamp = temp;
-    } else {
-      answerPatterns.map((pattern) => {
-        let string = pattern.exec(temp);
-        if (string !== null) {
-          question.answer = string[0].split(" ")[1];
+      if (questionPattern.test(temp)) {
+        question.text = temp
+          .split(questionPattern)[1]
+          .replaceAll("**", "")
+          .trim();
+      } else if (choicePattern.test(temp)) {
+        question.options.push(temp.replaceAll("**", "").trim());
+      } else if (timestampPattern.test(temp)) {
+        const timeInSeconds = /\d+.\d\d/.exec(temp);
+        const timeInMinutes = /\d+:\d\d/.exec(temp);
+        if (timeInSeconds !== null) {
+          question.timestamp = 1000 * parseInt(timeInSeconds[0].split(".")[0]);
+        } else if (timeInMinutes !== null) {
+          const [minutes, seconds] = timeInMinutes[0].split(":");
+          question.timestamp =
+            (parseInt(minutes) * 60 + parseInt(seconds)) * 1000;
         }
-      });
+      } else {
+        answerPatterns.map((pattern) => {
+          let string = pattern.exec(temp);
+          if (string !== null) {
+            question.answer = string[0].split(" ")[1];
+          }
+        });
+      }
     }
 
-    index += 1;
     if (index >= 7) {
       choices.map((choice) => {
         if (question.answer.toLowerCase().includes(choice)) {
@@ -134,8 +148,7 @@ const extractQuestions = (response) => {
         }
       });
       questions.push(question);
-      question = { text: "", options: [], answer: "", timestamp: "" };
-      index = 0;
+      question = { text: "", options: [], answer: "", timestamp: 0 };
     }
   }
   return { title, questions };
@@ -156,8 +169,8 @@ const transcribeAudio = async (audioFile) => {
   return content;
 };
 
-const createQuiz = async (id, title, questions) => {
-  const quiz = await Quiz.create({ title, UserId: id });
+const createQuiz = async (id, title, filename, questions) => {
+  const quiz = await Quiz.create({ title, filename, UserId: id });
 
   const questionPromises = questions.map((question) =>
     Question.create({
@@ -169,13 +182,12 @@ const createQuiz = async (id, title, questions) => {
       option4: question.options[3],
       correctAnswer: question.answer,
       timestamp: question.timestamp,
-    }),
+    })
   );
 
   //TODO: Unhandled promise rejection
   await Promise.all(questionPromises).catch((error) => {
-    console.error(error);
-    return res.status(500).json({ error: "Internal server error" });
+    if (error) return null;
   });
 
   return quiz;
@@ -202,7 +214,10 @@ quizzesRouter.post(
       const fileContent = fs.readFileSync(req.file.path, "utf8");
       const response = await transcriptGPT(fileContent);
       const { title, questions } = extractQuestions(response);
-      const quiz = await createQuiz(id, title, questions);
+      const quiz = await createQuiz(id, title, textFile.filename, questions);
+      if (quiz === null) {
+        return res.status(500).json({ error: "Internal server error" });
+      }
 
       return res
         .status(201)
@@ -211,7 +226,7 @@ quizzesRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  },
+  }
 );
 
 quizzesRouter.post(
@@ -235,7 +250,10 @@ quizzesRouter.post(
       const transcript = await transcribeAudio(audioFile);
       const response = await transcriptGPT(transcript);
       const { title, questions } = extractQuestions(response);
-      const quiz = await createQuiz(id, title, questions);
+      const quiz = await createQuiz(id, title, audioFile.filename, questions);
+      if (quiz === null) {
+        return res.status(500).json({ error: "Internal server error" });
+      }
 
       return res
         .status(201)
@@ -244,7 +262,7 @@ quizzesRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  },
+  }
 );
 
 quizzesRouter.post(
@@ -276,9 +294,12 @@ quizzesRouter.post(
 
       const transcript = await transcribeAudio(audioFilePath);
       const response = await transcriptGPT(transcript);
-      console.log(response);
       const { title, questions } = extractQuestions(response);
-      const quiz = await createQuiz(id, title, questions);
+      const quiz = await createQuiz(id, title, videoFile.filename, questions);
+      if (quiz === null) {
+        console.log("Quiz is null");
+        return res.status(500).json({ error: "Internal server error" });
+      }
 
       return res
         .status(201)
@@ -287,7 +308,7 @@ quizzesRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  },
+  }
 );
 
 quizzesRouter.get("/:id/quizzes", ensureAuthenticated, async (req, res) => {
@@ -340,7 +361,7 @@ quizzesRouter.get(
     // Include questions in the response
     const questions = await Question.findAll({ where: { QuizId: quiz.id } });
     return res.json({ quiz: quiz, questions: questions });
-  },
+  }
 );
 
 quizzesRouter.delete(
@@ -379,5 +400,5 @@ quizzesRouter.delete(
       where: { id: req.params.quizId },
     });
     return res.json({ message: "Quiz deleted successfully" });
-  },
+  }
 );

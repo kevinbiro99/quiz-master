@@ -26,4 +26,8 @@ export const Question = sequelize.define("Question", {
     type: DataTypes.ENUM("option1", "option2", "option3", "option4"),
     allowNull: false,
   },
+  timestamp: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
 });
