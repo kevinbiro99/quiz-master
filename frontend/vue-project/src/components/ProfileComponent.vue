@@ -1,12 +1,19 @@
 <template>
   <div>
     <img src="@/assets/profile.png" alt="User Profile" class="profile-image" />
+    <div>{{ authState.username }}</div>
   </div>
 </template>
 
 <script>
+import { useAuthStore } from '@/stores/index'
+
 export default {
-  name: 'ProfileComponent'
+  name: 'ProfileComponent',
+  setup() {
+    const authState = useAuthStore()
+    return { authState }
+  }
 }
 </script>
 
@@ -15,6 +22,6 @@ export default {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  margin: 0.5rem;
+  margin: 0 0.5rem;
 }
 </style>

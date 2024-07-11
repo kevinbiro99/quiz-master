@@ -53,7 +53,7 @@ export default {
   background-color: #f44336;
   color: white;
   border: none;
-  margin: 10px 20px;
+  margin: 5px 20px;
   cursor: pointer;
   border-radius: 5px;
 }

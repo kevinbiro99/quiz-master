@@ -51,6 +51,18 @@ const transcriptGPT = async (fileContent) => {
                     **timestamp**
 
                     **question**...
+
+                    An example of a quiz would be:
+                    **Sample Quiz**
+
+                    **Question 1**
+                    What is the capital of France?
+                    **Choice A** Berlin
+                    **Choice B** Madrid
+                    **Choice C** Paris
+                    **Choice D** Rome
+                    **Answer** C) Paris
+                    **Timestamp** 0:00
                     `;
 
   const chatCompletion = await groq.chat.completions.create({
@@ -84,7 +96,7 @@ const transcriptGPT = async (fileContent) => {
 */
 const extractQuestions = (response) => {
   const lines = response.split("\n");
-  const title = lines[0];
+  const title = lines[0].replaceAll("**", "").trim();
   const questions = [];
   let question = { text: "", options: [], answer: "", timestamp: "" };
   let index = 0;
@@ -114,7 +126,9 @@ const extractQuestions = (response) => {
     if (questionPattern.test(temp)) {
       question.text = temp.split(questionPattern)[1].replace("**", "").trim();
     } else if (choicePattern.test(temp)) {
-      question.options.push(temp);
+      question.options.push(
+        temp.split(choicePattern)[1].replace("**", "").trim(),
+      );
     } else if (timestampPattern.test(temp)) {
       question.timestamp = temp;
     } else {
@@ -232,7 +246,7 @@ quizzesRouter.post(
         return res.status(404).json({ error: "User not found" });
       }
 
-      const transcript = await transcribeAudio(audioFile);
+      const transcript = await transcribeAudio(audioFile.path);
       const response = await transcriptGPT(transcript);
       const { title, questions } = extractQuestions(response);
       const quiz = await createQuiz(id, title, questions);
