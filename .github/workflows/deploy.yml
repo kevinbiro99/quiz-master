@@ -2,16 +2,16 @@ name: Deploy
 
 on:
   workflow_run:
-    workflows: 
-      - 'Publish Vue Frontend Skeleton to GHCR'
-      - 'Publish Vue Backend Skeleton to GHCR'
-    types: 
+    workflows:
+      - "Publish Vue Frontend Skeleton to GHCR"
+      - "Publish Vue Backend Skeleton to GHCR"
+    types:
       - completed
     branches:
-      - 'main'
+      - "main"
   push:
     branches:
-      - 'main'
+      - "main"
 
 jobs:
   deploy:

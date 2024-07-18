@@ -20,7 +20,7 @@ jobs:
     if: github.event_name == 'push'
     defaults:
       run:
-        working-directory: frontend
+        working-directory: frontend/vue-project
 
     steps:
       - uses: actions/checkout@v2

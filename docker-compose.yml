@@ -36,8 +36,6 @@ services:
     restart: always
     expose:
       - 5173
-    env_file:
-      - ./frontend/vue-project/.env
     environment:
       - VIRTUAL_HOST=quiz-master.tech
       - LETSENCRYPT_HOST=quiz-master.tech
@@ -48,8 +46,6 @@ services:
     restart: always
     expose:
       - 3000
-    env_file:
-      - ./backend/.env
     environment:
       - DB_HOST=postgres
       - VIRTUAL_HOST=api.quiz-master.tech
