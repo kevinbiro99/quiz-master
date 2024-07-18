@@ -1,21 +1,59 @@
 version: "3.7"
 
 services:
-  frontend:
-    build: ./frontend/vue-project
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
     ports:
-      - "5173:5173"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./certs:/etc/nginx/certs
+      - ./vhost:/etc/nginx/vhost.d
+      - ./html:/usr/share/nginx/html
+    labels:
+      - com.github.nginx-proxy.nginx-proxy
+
+  nginx-proxy-acme:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    depends_on:
+      - nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certs:/etc/nginx/certs
+      - ./vhost:/etc/nginx/vhost.d
+      - ./html:/usr/share/nginx/html
+      - ./acme:/etc/acme.sh
+    environment:
+      - DEFAULT_EMAIL=kevinbiro99@gmail.com
+      - NGINX_PROXY_CONTAINER=nginx-proxy
+
+  frontend:
+    image: ghcr.io/utsc-cscc09-programming-on-the-web/frontend-kevinbiro99
+    container_name: frontend
+    restart: always
+    expose:
+      - 5173
     env_file:
       - ./frontend/vue-project/.env
+    environment:
+      - VIRTUAL_HOST=quiz-master.tech
+      - LETSENCRYPT_HOST=quiz-master.tech
 
   backend:
-    build: ./backend
-    ports:
-      - "3000:3000"
+    image: ghcr.io/utsc-cscc09-programming-on-the-web/backend-kevinbiro99
+    container_name: backend
+    restart: always
+    expose:
+      - 3000
     env_file:
       - ./backend/.env
     environment:
       - DB_HOST=postgres
+      - VIRTUAL_HOST=api.quiz-master.tech
+      - LETSENCRYPT_HOST=api.quiz-master.tech
     depends_on:
       - postgres
 

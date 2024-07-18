@@ -17,7 +17,7 @@ const httpServer = createServer(app);
 
 app.use(express.static("static"));
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: "https://quiz-master.tech",
   credentials: true,
 };
 

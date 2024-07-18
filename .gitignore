@@ -9,4 +9,4 @@ db
 .eslintcache
 .vscode/
 .dockerignore
-backend/assets/output.mp3
+backend/assets/
