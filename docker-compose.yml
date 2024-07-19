@@ -44,6 +44,8 @@ services:
     image: ghcr.io/utsc-cscc09-programming-on-the-web/backend-kevinbiro99
     container_name: backend
     restart: always
+    env_file:
+      - ./backend/.env
     expose:
       - 3000
     environment:
