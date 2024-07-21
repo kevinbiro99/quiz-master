@@ -1,5 +1,8 @@
 import { Server } from "socket.io";
 import { Mutex } from "async-mutex";
+import env from "dotenv";
+
+env.config();
 
 const joinQuizMutex = new Mutex();
 const createRoomMutex = new Mutex();
@@ -18,7 +21,7 @@ const generateUniqueCode = () => {
 export const initializeSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: process.env.API_CORS_URL,
       methods: ["GET", "POST"],
       credentials: true,
     },

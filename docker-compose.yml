@@ -12,6 +12,8 @@ services:
       - ./certs:/etc/nginx/certs
       - ./vhost:/etc/nginx/vhost.d
       - ./html:/usr/share/nginx/html
+      - ./nginx/custom.conf:/etc/nginx/conf.d/custom.conf:ro
+      - ./nginx/custom-spa.conf:/etc/nginx/conf.d/custom-spa.conf:ro
     labels:
       - com.github.nginx-proxy.nginx-proxy
 
@@ -32,17 +34,24 @@ services:
 
   frontend:
     image: ghcr.io/utsc-cscc09-programming-on-the-web/frontend-kevinbiro99
+    build: ./frontend/vue-project
     container_name: frontend
     restart: always
+    env_file:
+      - ./frontend/vue-project/.env
     expose:
       - 5173
     environment:
       - VIRTUAL_HOST=quiz-master.tech
       - LETSENCRYPT_HOST=quiz-master.tech
+    volumes:
+      - ./frontend/vue-project:/usr/src/app
+      - /usr/src/app/node_modules
 
   backend:
     image: ghcr.io/utsc-cscc09-programming-on-the-web/backend-kevinbiro99
     container_name: backend
+    build: ./backend
     restart: always
     env_file:
       - ./backend/.env

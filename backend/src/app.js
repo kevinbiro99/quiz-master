@@ -17,7 +17,7 @@ const httpServer = createServer(app);
 
 app.use(express.static("static"));
 const corsOptions = {
-  origin: "https://quiz-master.tech",
+  origin: process.env.API_CORS_URL,
   credentials: true,
 };
 
@@ -33,8 +33,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(cors(corsOptions));
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 try {
   await sequelize.authenticate();

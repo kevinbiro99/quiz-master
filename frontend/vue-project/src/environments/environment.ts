@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiEndpoint: 'http://localhost:3000'
+  apiEndpoint: import.meta.env.VITE_VUE_APP_API_URL,
 }

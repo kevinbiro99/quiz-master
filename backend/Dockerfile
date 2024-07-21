@@ -1,7 +1,8 @@
 FROM node:22
-WORKDIR /usr/src/app
+WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+COPY .env .env
 EXPOSE 3000
 CMD ["node", "src/app.js"]

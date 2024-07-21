@@ -13,7 +13,7 @@ export default {
     })
   },
 
-  signup(username, password) {
+  signup(username: any, password: any) {
     return fetchWrapper(`/api/users/signup`, {
       method: 'POST',
       headers: {
@@ -24,7 +24,7 @@ export default {
     })
   },
 
-  signin(username, password) {
+  signin(username: any, password: any) {
     return fetchWrapper(`/api/users/signin`, {
       method: 'POST',
       headers: {
@@ -47,7 +47,7 @@ export default {
     return fetchWrapper(`/api/users/me`)
   },
 
-  getQuizzes(userId) {
+  getQuizzes(userId: string) {
     return fetchWrapper(`/api/users/${userId}/quizzes`, {
       method: 'GET',
       headers: {
@@ -57,7 +57,7 @@ export default {
     })
   },
 
-  getQuiz(userId, quizId) {
+  getQuiz(userId: string, quizId: number) {
     return fetchWrapper(`/api/users/${userId}/quizzes/${quizId}`, {
       method: 'GET',
       headers: {
@@ -67,7 +67,7 @@ export default {
     })
   },
 
-  deleteQuiz(userId, quizId) {
+  deleteQuiz(userId: string, quizId: any) {
     return fetchWrapper(`/api/users/${userId}/quizzes/${quizId}`, {
       method: 'DELETE',
       headers: {
@@ -77,7 +77,7 @@ export default {
     })
   },
 
-  async createQuizFromTxt(userId, textFile) {
+  async createQuizFromTxt(userId: any, textFile: string | Blob) {
     const formData = new FormData()
     formData.append('textFile', textFile)
     return await fetchWrapper(`/api/users/${userId}/quizzes/text`, {
@@ -89,7 +89,7 @@ export default {
     })
   },
 
-  async createQuizFromAudio(userId, audioFile) {
+  async createQuizFromAudio(userId: any, audioFile: string | Blob) {
     const formData = new FormData()
     formData.append('audioFile', audioFile)
     return await fetchWrapper(`/api/users/${userId}/quizzes/audio`, {
@@ -101,7 +101,7 @@ export default {
     })
   },
 
-  async createQuizFromVideo(userId, videoFile) {
+  async createQuizFromVideo(userId: any, videoFile: string | Blob) {
     const formData = new FormData()
     formData.append('videoFile', videoFile)
     return await fetchWrapper(`/api/users/${userId}/quizzes/video`, {
