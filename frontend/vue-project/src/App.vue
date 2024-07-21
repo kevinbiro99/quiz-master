@@ -174,7 +174,9 @@ nav {
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+  transition:
+    max-height 0.3s ease-out,
+    opacity 0.3s ease-out;
   overflow: hidden;
   max-height: 0;
   opacity: 0;
@@ -187,7 +189,9 @@ nav a {
   border: 2px solid var(--color-border);
   border-radius: 20px;
   margin: 0.5rem 0.5rem;
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    transform 0.3s ease;
 }
 
 nav a:hover,

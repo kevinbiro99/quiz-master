@@ -127,7 +127,7 @@ const extractQuestions = (response) => {
       question.text = temp.split(questionPattern)[1].replace("**", "").trim();
     } else if (choicePattern.test(temp)) {
       question.options.push(
-        temp.split(choicePattern)[1].replace("**", "").trim()
+        temp.split(choicePattern)[1].replace("**", "").trim(),
       );
     } else if (timestampPattern.test(temp)) {
       question.timestamp = temp;
@@ -183,7 +183,7 @@ const createQuiz = async (id, title, questions) => {
       option4: question.options[3],
       correctAnswer: question.answer,
       timestamp: question.timestamp,
-    })
+    }),
   );
 
   //TODO: Unhandled promise rejection
@@ -225,7 +225,7 @@ quizzesRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  }
+  },
 );
 
 quizzesRouter.post(
@@ -258,7 +258,7 @@ quizzesRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  }
+  },
 );
 
 quizzesRouter.post(
@@ -301,7 +301,7 @@ quizzesRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  }
+  },
 );
 
 quizzesRouter.get("/:id/quizzes", ensureAuthenticated, async (req, res) => {
@@ -354,7 +354,7 @@ quizzesRouter.get(
     // Include questions in the response
     const questions = await Question.findAll({ where: { QuizId: quiz.id } });
     return res.json({ quiz: quiz, questions: questions });
-  }
+  },
 );
 
 quizzesRouter.delete(
@@ -393,5 +393,5 @@ quizzesRouter.delete(
       where: { id: req.params.quizId },
     });
     return res.json({ message: "Quiz deleted successfully" });
-  }
+  },
 );

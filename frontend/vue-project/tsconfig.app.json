@@ -8,20 +8,20 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "allowJs": true,  // Allow JavaScript files to be included in the compilation
-    "target": "esnext",  // Target ECMAScript version
-    "lib": ["esnext", "dom"],  // Include ESNext and DOM libraries
-    "skipLibCheck": true,  // Skip type checking of declaration files
-    "esModuleInterop": true,  // Enable interoperability between CommonJS and ES Modules
-    "allowSyntheticDefaultImports": true,  // Allow synthetic default imports
-    "strict": true,  // Enable all strict type-checking options
-    "forceConsistentCasingInFileNames": true,  // Ensure file name casing consistency
-    "module": "esnext",  // Use ESNext module system
-    "moduleResolution": "node",  // Use Node.js module resolution strategy
-    "resolveJsonModule": true,  // Allow importing JSON modules
-    "isolatedModules": true,  // Ensure that each file can be safely transpiled in isolation
-    "noEmit": true,  // Do not emit output files
-    "jsx": "preserve",  // Preserve JSX as-is
-    "types": ["vite/client"]  // Include Vite client types
+    "allowJs": true, // Allow JavaScript files to be included in the compilation
+    "target": "esnext", // Target ECMAScript version
+    "lib": ["esnext", "dom"], // Include ESNext and DOM libraries
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "esModuleInterop": true, // Enable interoperability between CommonJS and ES Modules
+    "allowSyntheticDefaultImports": true, // Allow synthetic default imports
+    "strict": true, // Enable all strict type-checking options
+    "forceConsistentCasingInFileNames": true, // Ensure file name casing consistency
+    "module": "esnext", // Use ESNext module system
+    "moduleResolution": "node", // Use Node.js module resolution strategy
+    "resolveJsonModule": true, // Allow importing JSON modules
+    "isolatedModules": true, // Ensure that each file can be safely transpiled in isolation
+    "noEmit": true, // Do not emit output files
+    "jsx": "preserve", // Preserve JSX as-is
+    "types": ["vite/client"] // Include Vite client types
   }
 }
