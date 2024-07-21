@@ -26,7 +26,11 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build image
-        run: docker build . --file Dockerfile --tag $IMAGE_NAME
+        run: |
+          docker build \
+            --build-arg VITE_VUE_APP_API_URL=${{ secrets.VITE_VUE_APP_API_URL }} \
+            --file Dockerfile \
+            --tag $IMAGE_NAME .
 
       - name: Log into GitHub Container Registry
         # TODO: Create a Personal Access Tokens (PAT) with `read:packages` and `write:packages` scopes and save it as an Actions secret `CR_PAT`

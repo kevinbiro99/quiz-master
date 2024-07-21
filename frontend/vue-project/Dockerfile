@@ -1,5 +1,7 @@
 # Stage 1: Build the Vue 3 app
 FROM node:22 as build
+ARG VITE_VUE_APP_API_URL
+ENV VITE_VUE_APP_API_URL=$VITE_VUE_APP_API_URL
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
