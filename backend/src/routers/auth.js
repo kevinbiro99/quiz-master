@@ -1,5 +1,8 @@
 import express from "express";
 import passport from "../config/passport_config.js";
+import env from "dotenv";
+
+env.config();
 
 export const authRouter = express.Router();
 
@@ -13,7 +16,7 @@ authRouter.get(
 authRouter.get(
   "/google/callback",
   passport.authenticate("google", {
-    successRedirect: "http://localhost:5173/auth-success",
+    successRedirect: `${process.env.API_CORS_URL}/auth-success`,
     failureRedirect: "/login",
   }),
 );

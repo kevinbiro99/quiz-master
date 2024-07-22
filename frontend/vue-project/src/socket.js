@@ -89,6 +89,10 @@ socket.on('roomCreated', ({ code }) => {
   state.hostConnected = true
 })
 
+socket.on('disconnect', () => {
+  socketFunctions.resetState()
+})
+
 socket.on('connect', () => {
   state.connected = true
 })

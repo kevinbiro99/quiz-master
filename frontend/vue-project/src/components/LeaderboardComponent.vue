@@ -6,7 +6,7 @@
     </div>
     <div class="leaderboard-container">
       <div
-        v-for="(participant, index) in topParticipants"
+        v-for="(participant, index) in sortedParticipants"
         :key="participant.username || index"
         :class="['leaderboard-item', { highlighted: isCurrentUser(participant) }]"
         :style="podiumStyle(index)"
@@ -41,11 +41,6 @@ export default {
     },
     sortedParticipants() {
       return [...this.state.participants].sort((a, b) => b.score - a.score)
-    },
-    topParticipants() {
-      const topFive = [...this.sortedParticipants].slice(0, 5)
-      // Fill the remaining positions with empty objects if there are fewer than 5 participants
-      return [...topFive, ...Array(5 - topFive.length).fill({ username: '', score: 0 })]
     },
     currentUser() {
       return (
@@ -93,7 +88,14 @@ export default {
           Flip.from(state, {
             duration: 1,
             ease: 'power2.inOut',
-            stagger: 0.1
+            stagger: 0.1,
+            onComplete: () => {
+              console.log('Flip animation complete')
+              this.$refs.leaderboardItems.forEach((item) => {
+                item.style.opacity = '1'
+                item.style.transform = 'translateY(0)'
+              })
+            }
           })
         })
       },
@@ -101,14 +103,16 @@ export default {
     }
   },
   mounted() {
-    this.topParticipants.forEach((participant) => {
+    this.sortedParticipants.forEach((participant, index) => {
       this.tweenedScores[participant.username] = 0
-      gsap.to(this.$refs.leaderboardItems, {
-        duration: 0.5,
-        y: 0,
-        opacity: 1,
-        stagger: 0.2
-      })
+      if (this.$refs.leaderboardItems) {
+        gsap.to(this.$refs.leaderboardItems[index], {
+          duration: 0.5,
+          y: 0,
+          opacity: 1,
+          stagger: 0.2
+        })
+      }
     })
   }
 }
