@@ -376,6 +376,41 @@ quizzesRouter.get(
   }
 );
 
+quizzesRouter.get(
+  "/:id/quizzes/:quizId/video",
+  ensureAuthenticated,
+  async (req, res) => {
+    if (req.params.id === undefined || typeof +req.params.id !== "number") {
+      return res.status(422).json({ error: "Invalid user ID" });
+    }
+    if (
+      req.params.quizId === undefined ||
+      typeof +req.params.quizId !== "number"
+    ) {
+      return res.status(422).json({ error: "Invalid quiz ID" });
+    }
+    const user = await User.findByPk(req.params.id);
+
+    if (user === null) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (req.session.username && req.session.username !== user.username) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    if (req.user && req.user.id !== user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const quiz = await Quiz.findOne({
+      where: { id: req.params.quizId, UserId: req.params.id },
+    });
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+    const videoPath = `uploads/${quiz.filename}`;
+    return res.sendFile(videoPath, { root: "." });
+  }
+);
+
 quizzesRouter.delete(
   "/:id/quizzes/:quizId",
   ensureAuthenticated,
