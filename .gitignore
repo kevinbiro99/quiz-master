@@ -10,3 +10,6 @@ db
 .vscode/
 .dockerignore
 backend/assets/
+acme
+html
+certs

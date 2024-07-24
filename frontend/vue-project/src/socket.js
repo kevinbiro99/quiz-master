@@ -15,7 +15,10 @@ export const state = reactive({
   numQuestions: 0,
   questionIndex: 0,
   title: '',
-  hostConnected: false
+  hostConnected: false,
+  hostSocketId: '',
+  answerIndex: 0 // the host will store the correct answer index here after broadcasting a question
+  // participants will have this updated after submitting an answer
 })
 
 const URL = environment.apiEndpoint
@@ -50,31 +53,47 @@ export const socketFunctions = {
       (state.numQuestions = 0),
       (state.questionIndex = 0),
       (state.title = ''),
-      (state.hostConnected = false)
+      (state.hostConnected = false),
+      (state.answerIndex = 0),
+      (state.hostSocketId = '')
   },
-  selectAnswer(answerIndex, score) {
+  selectAnswer(answerIndex, timeLeft) {
     socket.emit('selectAnswer', {
       code: state.roomCode,
       answerIndex: answerIndex,
-      score: score,
-      username: state.username
+      timeLeft: timeLeft,
+      username: state.username,
+      hostSocketId: state.hostSocketId
+    })
+  },
+  revealCorrectAnswer() {
+    socket.emit('revealCorrectAnswer', {
+      code: state.roomCode,
+      answer: state.answerIndex,
+      quizId: state.quizId
     })
   },
   endQuestion() {
     state.answerCounts = [0, 0, 0, 0]
   },
-  broadcastQuestion(question, questionIndex) {
+  broadcastQuestion(question, questionIndex, username, answer) {
+    // store the answer for the question but don't broadcast it
+    state.answerIndex = answer
     socket.emit('broadcastQuestion', {
       code: state.roomCode,
       question,
-      questionIndex
+      questionIndex,
+      username,
+      answer,
+      quizId: state.quizId
     })
   },
   broadcastQuizInfo(title, numQuestions) {
     socket.emit('broadcastQuizInfo', {
       code: state.roomCode,
       numQuestions,
-      title
+      title,
+      quizId: state.quizId
     })
   }
 }
@@ -102,21 +121,24 @@ socket.on('hostLeft', () => {
   state.quizStarted = false
 })
 
-socket.on('userJoined', ({ code, username }) => {
-  if (state.username === '') state.username = username
-  state.participants.push({ score: 0, username })
-  state.roomCode = code
+socket.on('userJoined', ({ code, username, hostSocketId }) => {
+  if (state.username === '') {
+    state.username = username
+    state.roomCode = code
+    state.hostSocketId = hostSocketId
+  }
 })
 
-socket.on('quizStarted', ({ quizId }) => {
-  console.log('Quiz started')
-  state.quizId = quizId
+socket.on('quizStarted', () => {
   state.quizStarted = true
 })
 
-socket.on('answerSelected', ({ answerIndex, score, username }) => {
+socket.on('answerSelected', ({ answerIndex }) => {
   state.answerCounts[answerIndex]++
-  state.participants.find((p) => p.username === username).score += score
+})
+
+socket.on('correctAnswerRevealed', ({ answer }) => {
+  state.answerIndex = answer
 })
 
 socket.on('duplicateUsername', () => {
@@ -138,5 +160,5 @@ socket.on('quizInfoBroadcasted', ({ title, numQuestions }) => {
 })
 
 socket.on('connect_error', (err) => {
-  console.log(`connect_error due to ${err.message}`)
+  console.error(`connect_error due to ${err.message}`)
 })

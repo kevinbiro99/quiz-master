@@ -7,6 +7,11 @@
       @drop.prevent="handleFileDrop"
       @click="triggerFileInput"
     >
+      <div class="file-types">
+        <img src="@/assets/txt.png" alt="TXT File" class="file-icon" />
+        <img src="@/assets/mp3.png" alt="MP3 File" class="file-icon" />
+        <img src="@/assets/mp4.png" alt="MP4 File" class="file-icon" />
+      </div>
       <p>Drag files here to upload or</p>
       <button type="button" class="upload-button">Choose File</button>
       <input
@@ -31,8 +36,7 @@
       Submit
     </button>
     <p v-if="state.fileUploaded">File Uploaded!</p>
-    <p v-if="state.invalidFile">Invalid file type</p>
-    <p v-if="state.errorMessage" class="error-message">{{ state.errorMessage }}</p>
+    <p v-if="state.invalidFile">{{ state.errorMessage }}</p>
     <p v-if="state.loading">{{ state.loadingMessage }}</p>
   </div>
 </template>
@@ -59,9 +63,15 @@ export default {
       apiCallDone: false
     })
 
+    const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB in bytes
+
     const handleFileUpload = (event) => {
       const file = event.target.files[0]
-      if (file && ['text/plain', 'audio/mpeg', 'video/mp4'].includes(file.type)) {
+      if (
+        file &&
+        ['text/plain', 'audio/mpeg', 'video/mp4'].includes(file.type) &&
+        file.size <= MAX_FILE_SIZE
+      ) {
         state.file = file
         state.invalidFile = false
         state.fileUploaded = false
@@ -70,13 +80,20 @@ export default {
       } else {
         state.file = null
         state.invalidFile = true
-        state.errorMessage = 'Invalid file type. Please upload a .txt, .mp3, or .mp4 file.'
+        state.errorMessage =
+          file.size > MAX_FILE_SIZE
+            ? 'File size exceeds 50MB. Please upload a smaller file.'
+            : 'Invalid file type. Please upload a .txt, .mp3, or .mp4 file.'
       }
     }
 
     const handleFileDrop = (event) => {
       const file = event.dataTransfer.files[0]
-      if (file && ['text/plain', 'audio/mpeg', 'video/mp4'].includes(file.type)) {
+      if (
+        file &&
+        ['text/plain', 'audio/mpeg', 'video/mp4'].includes(file.type) &&
+        file.size <= MAX_FILE_SIZE
+      ) {
         state.file = file
         state.invalidFile = false
         state.fileUploaded = false
@@ -85,7 +102,10 @@ export default {
       } else {
         state.file = null
         state.invalidFile = true
-        state.errorMessage = 'Invalid file type. Please upload a .txt, .mp3, or .mp4 file.'
+        state.errorMessage =
+          file.size > MAX_FILE_SIZE
+            ? 'File size exceeds 50MB. Please upload a smaller file.'
+            : 'Invalid file type. Please upload a .txt, .mp3, or .mp4 file.'
       }
     }
 
@@ -211,6 +231,18 @@ export default {
   cursor: pointer;
   position: relative;
   animation: pulse 4s infinite;
+}
+
+.file-types {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.file-icon {
+  width: 50px;
+  height: 50px;
 }
 
 .file-upload p {

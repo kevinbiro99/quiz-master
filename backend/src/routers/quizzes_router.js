@@ -2,7 +2,7 @@ import { Router } from "express";
 import { User } from "../models/users.js";
 import { Quiz } from "../models/quizzes.js";
 import { Question } from "../models/questions.js";
-import { body, validationResult } from "express-validator";
+import { validationResult } from "express-validator";
 import { config } from "dotenv";
 import Groq from "groq-sdk";
 import multer from "multer";
@@ -31,7 +31,23 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit
+  },
+  limits: { files: 1 },
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype.startsWith("audio") ||
+      file.mimetype.startsWith("video") ||
+      file.mimetype.startsWith("text")
+    ) {
+      return cb(null, true);
+    }
+    return cb(new Error("File is not text, video, or audio"));
+  },
+});
 
 config();
 
@@ -197,8 +213,29 @@ const createQuiz = async (id, title, questions) => {
 
 quizzesRouter.post(
   "/:id/quizzes/text",
+  ensureAuthenticated,
   upload.single("textFile"),
   async (req, res) => {
+    if (req.params.id === undefined || typeof +req.params.id !== "number") {
+      return res.status(422).json({ error: "Invalid user ID" });
+    }
+    if (
+      req.file === undefined ||
+      req.file === null ||
+      !req.file.mimetype.startsWith("text")
+    ) {
+      return res.status(415).json({ error: "Invalid text file" });
+    }
+    const user = await User.findByPk(req.params.id);
+    if (user === null) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (req.user && req.user.id !== user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    if (req.session.username && req.session.username !== user.username) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
     const id = req.params.id;
     const textFile = req.file;
 
@@ -208,11 +245,6 @@ quizzesRouter.post(
     }
 
     try {
-      const user = await User.findByPk(id);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
       const fileContent = fs.readFileSync(req.file.path, "utf8");
       const response = await transcriptGPT(fileContent);
       const { title, questions } = extractQuestions(response);
@@ -230,8 +262,29 @@ quizzesRouter.post(
 
 quizzesRouter.post(
   "/:id/quizzes/audio",
+  ensureAuthenticated,
   upload.single("audioFile"),
   async (req, res) => {
+    if (req.params.id === undefined || typeof +req.params.id !== "number") {
+      return res.status(422).json({ error: "Invalid user ID" });
+    }
+    if (
+      req.file === undefined ||
+      req.file === null ||
+      req.file.mimetype.startsWith("audio") === false
+    ) {
+      return res.status(415).json({ error: "Invalid audio file" });
+    }
+    const user = await User.findByPk(req.params.id);
+    if (user === null) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (req.user && req.user.id !== user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    if (req.session.username && req.session.username !== user.username) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
     const id = req.params.id;
     const audioFile = req.file;
 
@@ -241,11 +294,6 @@ quizzesRouter.post(
     }
 
     try {
-      const user = await User.findByPk(id);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
       const transcript = await transcribeAudio(audioFile.path);
       const response = await transcriptGPT(transcript);
       const { title, questions } = extractQuestions(response);
@@ -264,7 +312,28 @@ quizzesRouter.post(
 quizzesRouter.post(
   "/:id/quizzes/video",
   upload.single("videoFile"),
+  ensureAuthenticated,
   async (req, res) => {
+    if (req.params.id === undefined || typeof +req.params.id !== "number") {
+      return res.status(422).json({ error: "Invalid user ID" });
+    }
+    if (
+      req.file === undefined ||
+      req.file === null ||
+      req.file.mimetype !== "video/mp4"
+    ) {
+      return res.status(415).json({ error: "Invalid video file" });
+    }
+    const user = await User.findByPk(req.params.id);
+    if (user === null) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (req.user && req.user.id !== user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    if (req.session.username && req.session.username !== user.username) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
     const id = req.params.id;
     const videoFile = req.file;
 
@@ -274,11 +343,6 @@ quizzesRouter.post(
     }
 
     try {
-      const user = await User.findByPk(id);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
       const audioFilePath = "assets/output.mp3";
       await new Promise((resolve, reject) => {
         ffmpeg(videoFile.path)
@@ -290,7 +354,6 @@ quizzesRouter.post(
 
       const transcript = await transcribeAudio(audioFilePath);
       const response = await transcriptGPT(transcript);
-      console.log(response);
       const { title, questions } = extractQuestions(response);
       const quiz = await createQuiz(id, title, questions);
 

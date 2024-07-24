@@ -23,7 +23,6 @@ passport.use(
             password: null,
           });
         }
-        console.log(user.toJSON());
         return done(null, user);
       } catch (err) {
         return done(err, null);

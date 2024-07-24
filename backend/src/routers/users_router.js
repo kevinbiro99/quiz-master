@@ -4,28 +4,8 @@ import { Quiz } from "../models/quizzes.js";
 import { Question } from "../models/questions.js";
 import { body, validationResult } from "express-validator";
 import { ensureAuthenticated } from "../middlewares/auth.js";
-import { config } from "dotenv";
-import Groq from "groq-sdk";
-import multer from "multer";
-import fs from "fs";
 import bcrypt from "bcrypt";
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    const fileExt = file.originalname.split(".").pop();
-    const filename = `${new Date().getTime()}.${fileExt}`;
-    cb(null, filename);
-  },
-});
-
-const upload = multer({ storage: storage });
-
-config();
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 export const usersRouter = Router();
 
 usersRouter.get("/me", ensureAuthenticated, async (req, res) => {
@@ -74,10 +54,15 @@ usersRouter.post(
     }
 
     try {
-      console.log(id);
       const user = await User.findByPk(id);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
+      }
+      if (req.session.username && req.session.username !== user.username) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      if (req.user && req.user.id !== user.id) {
+        return res.status(403).json({ error: "Forbidden" });
       }
 
       const quiz = await Quiz.create({ title, UserId: id });
@@ -105,17 +90,6 @@ usersRouter.post(
     }
   },
 );
-
-usersRouter.delete("/:id/", ensureAuthenticated, async (req, res) => {
-  const quizzes = await Quiz.findAll({ where: { UserId: req.params.id } });
-  const quizIds = quizzes.map((quiz) => quiz.id);
-  const questions = await Question.destroy({ where: { QuizId: quizIds } });
-  const quizzesDeleted = await Quiz.destroy({
-    where: { UserId: req.params.id },
-  });
-  const users = await User.destroy({ where: { id: req.params.id } });
-  return res.json({ message: "User deleted successfully" });
-});
 
 usersRouter.post("/signin", async (req, res) => {
   const user = await User.findOne({

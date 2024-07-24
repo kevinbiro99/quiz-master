@@ -72,7 +72,7 @@ const timePerQuiz = ref(10)
 const timeLeft = ref(timePerQuiz.value)
 const questionEnded = ref(false)
 const quizEnded = ref(false)
-const correctAnswer = ref(0)
+
 const optionsMap = {
   option1: 0,
   option2: 1,
@@ -89,6 +89,7 @@ const state = computed(() => socketState)
 const isHost = computed(() => questions.value.length > 0)
 const timeBarWidth = computed(() => (timeLeft.value / timePerQuiz.value) * 100)
 const maxVotes = computed(() => Math.max(...state.value.answerCounts, 1)) // Avoid division by zero
+const correctAnswer = computed(() => state.value.answerIndex)
 
 // Lifecycle hooks
 onMounted(() => {
@@ -137,16 +138,20 @@ const broadcastQuestion = () => {
     return
   }
   const question = questions.value[quizQuestionIndex.value]
-  // TODO: Remove correctAnswer from question object
+
   const questionWithoutAnswer = {
     text: question.text,
     option1: question.option1,
     option2: question.option2,
     option3: question.option3,
-    option4: question.option4,
-    correctAnswer: question.correctAnswer
+    option4: question.option4
   }
-  socketFunctions.broadcastQuestion(questionWithoutAnswer, quizQuestionIndex.value)
+  socketFunctions.broadcastQuestion(
+    questionWithoutAnswer,
+    quizQuestionIndex.value,
+    authState.username,
+    question.correctAnswer
+  )
 }
 
 const loadNextQuestion = () => {
@@ -158,7 +163,6 @@ const loadNextQuestion = () => {
     question.option3,
     question.option4
   ]
-  correctAnswer.value = question.correctAnswer
   selectedAnswer.value = null
   answerTimeLeft.value = 1
   isAnswered.value = false
@@ -181,6 +185,9 @@ const startTimer = () => {
 }
 
 const revealCorrectAnswer = () => {
+  if (isHost.value) {
+    socketFunctions.revealCorrectAnswer()
+  }
   if (state.value.questionIndex >= state.value.numQuestions - 1) {
     quizEnded.value = true
     state.value.quizStarted = false
@@ -198,11 +205,7 @@ const selectAnswer = (index) => {
   isAnswered.value = true
   selectedAnswer.value = index
   answerTimeLeft.value = timeLeft.value
-  const score =
-    (selectedAnswer.value === optionsMap[correctAnswer.value] ? 1 : 0) *
-    (1 + answerTimeLeft.value) *
-    100
-  socketFunctions.selectAnswer(selectedAnswer.value, score)
+  socketFunctions.selectAnswer(selectedAnswer.value, answerTimeLeft.value)
 }
 
 const endQuestion = () => {

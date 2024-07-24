@@ -90,7 +90,6 @@ export default {
             ease: 'power2.inOut',
             stagger: 0.1,
             onComplete: () => {
-              console.log('Flip animation complete')
               this.$refs.leaderboardItems.forEach((item) => {
                 item.style.opacity = '1'
                 item.style.transform = 'translateY(0)'
