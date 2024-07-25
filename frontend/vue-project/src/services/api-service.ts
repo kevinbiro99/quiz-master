@@ -2,8 +2,8 @@ import { environment } from '@/environments/environment'
 import fetchWrapper from './fetch-wrapper'
 
 export default {
-  getUsers() {
-    return fetchWrapper(`/api/users`, {
+  getUsers(page: number, limit = 10) {
+    return fetchWrapper(`/api/users/?page=${page}&limit=${limit}`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -47,8 +47,8 @@ export default {
     return fetchWrapper(`/api/users/me`)
   },
 
-  getQuizzes(userId: string) {
-    return fetchWrapper(`/api/users/${userId}/quizzes`, {
+  getQuizzes(userId: string, page: number, limit = 5) {
+    return fetchWrapper(`/api/users/${userId}/quizzes?page=${page}&limit=${limit}`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import TestComponent from '../components/test/TestComponent.vue'
+import UsersComponent from '../components/users/UsersComponent.vue'
 </script>
 
 <template>
   <main class="main-content">
-    <TestComponent />
+    <UsersComponent />
   </main>
 </template>

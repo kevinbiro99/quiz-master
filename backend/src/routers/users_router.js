@@ -5,6 +5,7 @@ import { Question } from "../models/questions.js";
 import { body, validationResult } from "express-validator";
 import { ensureAuthenticated } from "../middlewares/auth.js";
 import bcrypt from "bcrypt";
+import sequelize from "sequelize";
 
 export const usersRouter = Router();
 
@@ -19,10 +20,57 @@ usersRouter.get("/me", ensureAuthenticated, async (req, res) => {
 });
 
 usersRouter.get("/", async (req, res) => {
-  const users = await User.findAll({
-    attributes: ["username", "id"],
-  });
-  return res.json(users);
+  if (req.query.page !== undefined && isNaN(+req.query.page)) {
+    return res.status(422).json({ error: "Invalid query parameters" });
+  }
+
+  let limit = +req.query.limit;
+  if (isNaN(limit)) {
+    limit = 10;
+  }
+
+  let offset = +req.query.page * limit;
+  if (isNaN(offset)) {
+    offset = 0;
+  }
+
+  try {
+    const users = await User.findAll({
+      attributes: [
+        "id",
+        "username",
+        [
+          sequelize.literal(`(
+          SELECT COUNT(*)
+          FROM "Quizzes"
+          WHERE "Quizzes"."UserId" = "User"."id"
+        )`),
+          "quizCount",
+        ],
+        [
+          sequelize.literal(`(
+          SELECT COUNT(*)
+          FROM "Questions"
+          INNER JOIN "Quizzes" ON "Quizzes"."id" = "Questions"."QuizId"
+          WHERE "Quizzes"."UserId" = "User"."id"
+        )`),
+          "questionCount",
+        ],
+      ],
+      limit: limit,
+      offset: offset,
+      raw: true,
+    });
+
+    const numUsers = await User.count();
+    return res.json({
+      users: users,
+      numPages: Math.ceil(numUsers / limit),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 usersRouter.post(

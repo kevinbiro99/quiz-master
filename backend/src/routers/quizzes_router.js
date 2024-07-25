@@ -368,6 +368,17 @@ quizzesRouter.post(
 );
 
 quizzesRouter.get("/:id/quizzes", ensureAuthenticated, async (req, res) => {
+  if (req.query.page !== undefined && isNaN(+req.query.page)) {
+    return res.status(422).json({ error: "Invalid query parameters" });
+  }
+  let limit = +req.query.limit;
+  if (isNaN(limit)) {
+    limit = 5;
+  }
+  let offset = +req.query.page * limit;
+  if (isNaN(offset)) {
+    offset = 0;
+  }
   if (req.params.id === undefined || typeof +req.params.id !== "number") {
     return res.status(422).json({ error: "Invalid user ID" });
   }
@@ -381,8 +392,13 @@ quizzesRouter.get("/:id/quizzes", ensureAuthenticated, async (req, res) => {
   if (req.user && req.user.id !== user.id) {
     return res.status(403).json({ error: "Forbidden" });
   }
-  const quizzes = await Quiz.findAll({ where: { UserId: req.params.id } });
-  return res.json(quizzes);
+  const quizzes = await Quiz.findAll({
+    where: { UserId: req.params.id },
+    limit,
+    offset,
+  });
+  const totalQuizzes = await Quiz.count({ where: { UserId: req.params.id } });
+  return res.json({ quizzes, numPages: Math.ceil(totalQuizzes / limit) });
 });
 
 quizzesRouter.get(

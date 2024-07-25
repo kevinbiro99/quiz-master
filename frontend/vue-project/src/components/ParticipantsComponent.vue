@@ -10,16 +10,11 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { computed } from 'vue'
 import { state } from '@/socket'
 
-export default {
-  setup() {
-    const participants = computed(() => state.participants)
-    return { participants }
-  }
-}
+const participants = computed(() => state.participants)
 </script>
 
 <style scoped>

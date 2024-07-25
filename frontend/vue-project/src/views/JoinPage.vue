@@ -1,6 +1,7 @@
 <template>
   <div class="main-content">
     <div class="container">
+      <ConnectionLostComponent :visible="!state.connected" />
       <h2>Join a Quiz</h2>
       <p v-if="state.error">Error: {{ state.error }}</p>
       <p v-if="state.roomCode">Joined Room: {{ state.roomCode }}</p>
@@ -29,6 +30,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { socket, state, socketFunctions } from '@/socket'
 import { useAuthStore } from '@/stores/index'
 import ParticipantsComponent from '@/components/ParticipantsComponent.vue'
+import ConnectionLostComponent from '@/components/ConnectionLostComponent.vue'
 
 const authStore = useAuthStore()
 const code = ref('')

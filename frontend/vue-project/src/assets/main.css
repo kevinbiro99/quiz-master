@@ -113,10 +113,52 @@ button:hover {
   background-color: #007f52;
 }
 
+.btn:disabled {
+  background-color: var(--color-gradient-end);
+  cursor: not-allowed;
+}
+
 .hidden {
   display: none;
   height: 0;
   width: 0;
+}
+
+.delete {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 15px;
+  background-color: #ff4c4c;
+  color: #ffffff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete:hover {
+  background-color: #d40000;
+}
+
+.delete::before {
+  content: '✕';
+  font-size: 18px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.pagination span {
+  font-size: 18px;
+  margin: 0 20px;
 }
 
 @keyframes fadeIn {

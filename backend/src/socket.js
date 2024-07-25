@@ -58,13 +58,26 @@ export const initializeSocket = (server, sessionMiddleware) => {
 
       socket.on(
         "createRoom",
-        wrapAuthenticated(async (username) => {
+        wrapAuthenticated(async (username, quizId) => {
           const code = await createRoomMutex.runExclusive(async () => {
             return generateUniqueCode();
           });
+          const quiz = await Quiz.findOne({
+            where: { id: quizId },
+          });
+          const user = await User.findOne({
+            where: { username: username },
+          });
+          if (!quiz || !user) {
+            return;
+          }
+          if (quiz.UserId !== user.id) {
+            return;
+          }
           socket.username = username;
           socket.isHost = true;
           socket.participants = [{ username, score: 0 }];
+          socket.quizId = quizId;
           socket.join(code);
           io.to(code).emit("roomCreated", { code });
           io.to(code).emit("userJoined", {
@@ -277,6 +290,23 @@ export const initializeSocket = (server, sessionMiddleware) => {
           }
           // Notify other users that the host has left
           io.to(room).emit("hostLeft");
+        } else {
+          const roomUsers = Array.from(
+            io.sockets.adapter.rooms.get(room) || [],
+          );
+          if (roomUsers) {
+            const hostSocketId = roomUsers.find((socketId) => {
+              const userSocket = io.sockets.sockets.get(socketId);
+              return userSocket && userSocket.isHost;
+            });
+            if (hostSocketId) {
+              const host = io.sockets.sockets.get(hostSocketId);
+              host.participants = host.participants.filter(
+                (p) => p.username !== socket.username,
+              );
+              io.to(room).emit("updateParticipants", host.participants);
+            }
+          }
         }
         if (roomUsers && roomUsers.size === 1) {
           // if last user leaving

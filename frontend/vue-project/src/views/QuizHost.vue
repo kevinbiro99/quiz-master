@@ -47,6 +47,10 @@ const fetchQuiz = () => {
   apiService.getQuiz(authState.userId, quizId.value).then((res) => {
     isLoading.value = false
     if (res.error) {
+      isLoading.value = false
+      if (route.name !== 'QuizPage') {
+        socket.disconnect()
+      }
       console.error(res.error)
     } else {
       quizTitle.value = res.quiz.title
@@ -57,7 +61,7 @@ const fetchQuiz = () => {
 const startSession = () => {
   isLoading.value = true
   socket.connect()
-  socketFunctions.createRoom(authState.username)
+  socketFunctions.createRoom(authState.username, quizId.value)
 }
 
 const startQuiz = () => {

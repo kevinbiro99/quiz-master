@@ -33,8 +33,9 @@ export const socketFunctions = {
     socket.emit('joinQuiz', code, username)
     state.error = ''
   },
-  createRoom(username) {
-    socket.emit('createRoom', username)
+  createRoom(username, quizId) {
+    state.quizId = quizId
+    socket.emit('createRoom', username, quizId)
   },
   startQuiz(code, quizId) {
     state.quizId = quizId
