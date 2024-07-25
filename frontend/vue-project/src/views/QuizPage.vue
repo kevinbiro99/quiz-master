@@ -232,7 +232,7 @@ const loadVideo = () => {
   playVideo.value = true
   const videoContainer = document.querySelector('.video-container')
   videoContainer.innerHTML = `
-    <video id="video" width="90%" class="video-player" autoplay controls src=${environment.apiEndpoint}/api/users/${authState.userId}/quizzes/${quizId.value}/video></video>
+    <video id="video" width="90%" class="video-player" controls src=${environment.apiEndpoint}/api/users/${authState.userId}/quizzes/${quizId.value}/video></video>
   `
   videoContainer.querySelector('#video').currentTime = videoStartTime.value / 1000
 }
