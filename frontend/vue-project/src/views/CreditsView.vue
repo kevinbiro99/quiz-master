@@ -12,15 +12,11 @@
       </p>
       <p>
         GPT code from
-        <a href="https://console.groq.com/" target="_blank" rel="noopener noreferrer"
-          >flaticon</a
-        >.
+        <a href="https://console.groq.com/" target="_blank" rel="noopener noreferrer">flaticon</a>.
       </p>
       <p>
         Video player code and css from
-        <a href="https://videojs.com/" target="_blank" rel="noopener noreferrer">
-          flaticon</a
-        >.
+        <a href="https://videojs.com/" target="_blank" rel="noopener noreferrer"> flaticon</a>.
       </p>
     </div>
   </div>
