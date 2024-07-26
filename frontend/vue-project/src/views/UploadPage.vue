@@ -63,7 +63,7 @@ export default {
       apiCallDone: false
     })
 
-    const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB in bytes
+    const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB in bytes
 
     const handleFileUpload = (event) => {
       const file = event.target.files[0]
@@ -82,7 +82,7 @@ export default {
         state.invalidFile = true
         state.errorMessage =
           file.size > MAX_FILE_SIZE
-            ? 'File size exceeds 50MB. Please upload a smaller file.'
+            ? 'File size exceeds 25MB. Please upload a smaller file.'
             : 'Invalid file type. Please upload a .txt, .mp3, or .mp4 file.'
       }
     }
@@ -104,7 +104,7 @@ export default {
         state.invalidFile = true
         state.errorMessage =
           file.size > MAX_FILE_SIZE
-            ? 'File size exceeds 50MB. Please upload a smaller file.'
+            ? 'File size exceeds 25MB. Please upload a smaller file.'
             : 'Invalid file type. Please upload a .txt, .mp3, or .mp4 file.'
       }
     }
@@ -299,12 +299,59 @@ export default {
   border-radius: 5px;
   overflow: hidden;
   margin-top: 10px;
+  position: relative;
 }
 
 .progress {
   height: 100%;
   background-color: var(--color-highlight);
   transition: width 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: animate 2s linear infinite;
+}
+
+.progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: animate 2s linear infinite;
+  filter: blur(20px);
+}
+
+@keyframes animate {
+  0% {
+    background-position: 0 0;
+  }
+  0% {
+    background-position: 200% 0;
+  }
 }
 
 .error-message {
