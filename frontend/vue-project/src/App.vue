@@ -64,11 +64,7 @@ onBeforeUnmount(() => {
 <template>
   <header>
     <div class="navbar">
-      <RouterLink
-        to="/"
-        class="logo-title"
-        :class="{ disabled: route.name === 'QuizPage' && state.quizStarted }"
-      >
+      <RouterLink to="/" class="logo-title">
         <img alt="Vue logo" class="logo" src="@/assets/idea.png" />
         <span>QuizMaster</span>
       </RouterLink>

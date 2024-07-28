@@ -19,7 +19,7 @@
     </div>
     <div class="pagination">
       <button @click="prevPage" :disabled="currentPage === 1" class="btn">Previous</button>
-      <span class="no-wrap">Page {{ currentPage }} of {{ totalPages }}</span>
+      <span class="no-wrap">Page {{ currentPage }} of {{ Math.max(1, totalPages) }}</span>
       <button @click="nextPage" :disabled="currentPage >= totalPages" class="btn">Next</button>
     </div>
   </div>
@@ -67,7 +67,9 @@ export default {
             this.totalPages = res.numPages
             if (this.currentPage > this.totalPages) {
               this.currentPage = Math.max(1, this.totalPages)
-              this.fetchQuizzes()
+              if (this.totalPages > 0) {
+                this.fetchQuizzes()
+              }
             }
           }
         })
