@@ -4,13 +4,13 @@ import { Quiz } from "../models/quizzes.js";
 import { Question } from "../models/questions.js";
 import { validationResult } from "express-validator";
 import { config } from "dotenv";
-import Groq from "groq-sdk";
 import multer from "multer";
-import fs from "fs";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegStatic from "ffmpeg-static";
 import { mkdirSync, existsSync } from "fs";
 import { ensureAuthenticated } from "../middlewares/auth.js";
+import { quizJobQueue } from "../task_queues/quiz_task_queue.js";
+import fs from "fs";
 
 // Ensure upload directory exists
 const uploadDir = "uploads/";
@@ -22,7 +22,7 @@ ffmpeg.setFfmpegPath(ffmpegStatic);
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/");
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     const fileExt = file.originalname.split(".").pop();
@@ -51,165 +51,7 @@ const upload = multer({
 
 config();
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 export const quizzesRouter = Router();
-
-const transcriptGPT = async (fileContent) => {
-  const prompt = `Generate a 4 choice quiz with the answer after each question along with timestamp that reveals the answer based on the transcript below. Follow this sample format:
-                    **title for quiz**
-
-                    **question**
-                    **choice a**
-                    **choice b**
-                    **choice c**
-                    **choice d**
-                    **answer**
-                    **timestamp**
-
-                    **question**...
-
-                    An example of a quiz would be:
-                    **Sample Quiz**
-
-                    **Question 1**
-                    What is the capital of France?
-                    **Choice A** Berlin
-                    **Choice B** Madrid
-                    **Choice C** Paris
-                    **Choice D** Rome
-                    **Answer** C) Paris
-                    **Timestamp** 0:00
-                    `;
-
-  const chatCompletion = await groq.chat.completions.create({
-    messages: [
-      {
-        role: "user",
-        content: prompt + fileContent,
-      },
-    ],
-    temperature: 0,
-    model: "llama3-8b-8192",
-  });
-
-  const response = chatCompletion.choices[0]?.message?.content || "";
-
-  if (response === "") {
-    return res.status(500).json({ error: "No response from GROQ" });
-  }
-
-  return response;
-};
-
-/* Assumptions:
-  - First line of every resposne is title
-  - Every question has at least a question, 4 choices, 
-    an answer, and timestamp, in that order with each occupying 1 or 2 lines
-  - ** is used to indicate the start of a question, choice, answer, or 
-    timestamp
-  - If correct answer cannot be extracted, first choice is assumed to be
-    correct
-*/
-const extractQuestions = (response) => {
-  const lines = response.split("\n");
-  const title = lines[0].replaceAll("**", "").trim();
-  const questions = [];
-  let question = { text: "", options: [], answer: "", timestamp: "" };
-  let index = 0;
-  const questionPattern = /^\*\*\s*question\s*[0-9]*\)?:?/i;
-  const choicePattern = /^\*\*\s*choice\s*[abcd]\)?:?\s*\*\*/i;
-  const answerPatterns = [
-    /^\*\*\s*answer\s*:?\)?\s*\*\*\s*[abcd]\)?:?/i,
-    /^\*\*\s*answer\s*[abcd]\)?:?\s*\*\*/i,
-    /\*\*\s*choice\s*[abcd]\)?:?\s*\*\*/i,
-  ];
-  const timestampPattern = /^\*\*\s*timestamp/i;
-  const choices = ["a", "b", "c", "d"];
-
-  for (let i = 1; i < lines.length; i++) {
-    let temp = "";
-    if (!lines[i].includes("**")) continue;
-
-    temp = lines[i];
-    if (
-      i + 1 < lines.length &&
-      !lines[i + 1].includes("**") &&
-      (index !== 0 || lines[i + 1].includes("?"))
-    ) {
-      temp += " " + lines[i + 1];
-    }
-
-    if (questionPattern.test(temp)) {
-      question.text = temp.split(questionPattern)[1].replace("**", "").trim();
-    } else if (choicePattern.test(temp)) {
-      question.options.push(
-        temp.split(choicePattern)[1].replace("**", "").trim(),
-      );
-    } else if (timestampPattern.test(temp)) {
-      question.timestamp = temp;
-    } else {
-      answerPatterns.map((pattern) => {
-        let string = pattern.exec(temp);
-        if (string !== null) {
-          question.answer = string[0].split(" ")[1];
-        }
-      });
-    }
-
-    index += 1;
-    if (index >= 7) {
-      choices.map((choice) => {
-        if (question.answer.toLowerCase().includes(choice)) {
-          question.answer = "option" + (choices.indexOf(choice) + 1);
-        }
-      });
-      questions.push(question);
-      question = { text: "", options: [], answer: "", timestamp: "" };
-      index = 0;
-    }
-  }
-  return { title, questions };
-};
-
-const transcribeAudio = async (audioFile) => {
-  const transcription = await groq.audio.transcriptions.create({
-    file: fs.createReadStream(audioFile),
-    model: "whisper-large-v3",
-    response_format: "verbose_json", // Optional
-    language: "en", // Optional
-    temperature: 0.0, // Optional
-  });
-
-  const content = transcription.segments
-    .map((segment) => "(" + segment.start + ")\n" + segment.text + "\n\n")
-    .join("");
-  return content;
-};
-
-const createQuiz = async (id, title, questions) => {
-  const quiz = await Quiz.create({ title, UserId: id });
-
-  const questionPromises = questions.map((question) =>
-    Question.create({
-      QuizId: quiz.id,
-      text: question.text,
-      option1: question.options[0],
-      option2: question.options[1],
-      option3: question.options[2],
-      option4: question.options[3],
-      correctAnswer: question.answer,
-      timestamp: question.timestamp,
-    }),
-  );
-
-  //TODO: Unhandled promise rejection
-  await Promise.all(questionPromises).catch((error) => {
-    console.error(error);
-    return res.status(500).json({ error: "Internal server error" });
-  });
-
-  return quiz;
-};
 
 quizzesRouter.post(
   "/:id/quizzes/text",
@@ -245,19 +87,22 @@ quizzesRouter.post(
     }
 
     try {
-      const fileContent = fs.readFileSync(req.file.path, "utf8");
-      const response = await transcriptGPT(fileContent);
-      const { title, questions } = extractQuestions(response);
-      const quiz = await createQuiz(id, title, questions);
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
 
-      return res
-        .status(201)
-        .json({ message: "Quiz created successfully", quiz });
+      await quizJobQueue.add("quizFromTranscript", {
+        filename: audioFile.filename,
+        uploadDir: uploadDir,
+        id,
+      });
+      return res.status(202).json({ message: "Quiz creation in progress" });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  },
+  }
 );
 
 quizzesRouter.post(
@@ -294,19 +139,22 @@ quizzesRouter.post(
     }
 
     try {
-      const transcript = await transcribeAudio(audioFile.path);
-      const response = await transcriptGPT(transcript);
-      const { title, questions } = extractQuestions(response);
-      const quiz = await createQuiz(id, title, questions);
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
 
-      return res
-        .status(201)
-        .json({ message: "Quiz created successfully", quiz });
+      await quizJobQueue.add("quizFromAudio", {
+        filename: audioFile.filename,
+        uploadDir: uploadDir,
+        id,
+      });
+      return res.status(202).json({ message: "Quiz creation in progress" });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  },
+  }
 );
 
 quizzesRouter.post(
@@ -343,28 +191,30 @@ quizzesRouter.post(
     }
 
     try {
-      const audioFilePath = "assets/output.mp3";
-      await new Promise((resolve, reject) => {
-        ffmpeg(videoFile.path)
-          .output(audioFilePath)
-          .on("end", resolve)
-          .on("error", reject)
-          .run();
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      await quizJobQueue.add("quizFromVideo", {
+        filename: videoFile.filename,
+        uploadDir: uploadDir,
+        id,
       });
-
-      const transcript = await transcribeAudio(audioFilePath);
-      const response = await transcriptGPT(transcript);
-      const { title, questions } = extractQuestions(response);
-      const quiz = await createQuiz(id, title, questions);
-
-      return res
-        .status(201)
-        .json({ message: "Quiz created successfully", quiz });
+      return res.status(202).json({ message: "Quiz creation in progress" });
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Internal server error" });
+      if (error.name === "SequelizeForeignKeyConstraintError") {
+        return res.status(422).json({ error: "User not found" });
+      } else if (error.name === "SequelizeValidationError") {
+        return res.status(422).json({
+          error: "Invalid input parameters. Expected id and file",
+        });
+      } else {
+        console.log(error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
     }
-  },
+  }
 );
 
 quizzesRouter.get("/:id/quizzes", ensureAuthenticated, async (req, res) => {
@@ -433,7 +283,42 @@ quizzesRouter.get(
     // Include questions in the response
     const questions = await Question.findAll({ where: { QuizId: quiz.id } });
     return res.json({ quiz: quiz, questions: questions });
-  },
+  }
+);
+
+quizzesRouter.get(
+  "/:id/quizzes/:quizId/video",
+  ensureAuthenticated,
+  async (req, res) => {
+    if (req.params.id === undefined || typeof +req.params.id !== "number") {
+      return res.status(422).json({ error: "Invalid user ID" });
+    }
+    if (
+      req.params.quizId === undefined ||
+      typeof +req.params.quizId !== "number"
+    ) {
+      return res.status(422).json({ error: "Invalid quiz ID" });
+    }
+    const user = await User.findByPk(req.params.id);
+
+    if (user === null) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (req.session.username && req.session.username !== user.username) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    if (req.user && req.user.id !== user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const quiz = await Quiz.findOne({
+      where: { id: req.params.quizId, UserId: req.params.id },
+    });
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+    const videoPath = `uploads/${quiz.filename}`;
+    return res.sendFile(videoPath, { root: "." });
+  }
 );
 
 quizzesRouter.delete(
@@ -468,9 +353,10 @@ quizzesRouter.delete(
       return res.status(404).json({ error: "Quiz not found" });
     }
     const questions = await Question.destroy({ where: { QuizId: quiz.id } });
+    fs.unlinkSync(uploadDir + quiz.filename);
     const quizDeleted = await Quiz.destroy({
       where: { id: req.params.quizId },
     });
     return res.json({ message: "Quiz deleted successfully" });
-  },
+  }
 );

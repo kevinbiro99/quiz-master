@@ -17,6 +17,7 @@
     "gsap": "^3.12.5",
     "pinia": "^2.1.4",
     "socket.io-client": "^4.7.5",
+    "video.js": "^8.16.1",
     "vue": "^3.3.4",
     "vue-router": "^4.2.4",
     "vuex": "^4.1.0",

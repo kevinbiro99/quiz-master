@@ -10,6 +10,10 @@ import { initializeSocket } from "./socket.js";
 import { createServer } from "http";
 import passport from "passport";
 import session from "express-session";
+import { createBullBoard } from "@bull-board/api";
+import { ExpressAdapter } from "@bull-board/express";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter.js";
+import { quizJobQueue } from "./task_queues/quiz_task_queue.js";
 
 env.config();
 export const app = express();
@@ -47,9 +51,17 @@ try {
   console.error("Unable to connect to the database:", sequelize.config, error);
 }
 
+const serverAdapter = new ExpressAdapter();
+const bullBoard = createBullBoard({
+  queues: [new BullMQAdapter(quizJobQueue)],
+  serverAdapter: serverAdapter,
+});
+serverAdapter.setBasePath("/admin");
+
 app.use("/api/users", usersRouter);
 app.use("/api/users", quizzesRouter);
 app.use("/auth", authRouter);
+app.use("/admin", serverAdapter.getRouter());
 
 const PORT = 3000;
 const server = app.listen(PORT, () => {

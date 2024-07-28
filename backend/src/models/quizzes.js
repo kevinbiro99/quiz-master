@@ -7,6 +7,10 @@ export const Quiz = sequelize.define("Quiz", {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  filename: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
 });
 
 Quiz.hasMany(Question);

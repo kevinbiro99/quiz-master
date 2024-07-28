@@ -39,6 +39,8 @@
       <div v-if="isHost && !quizEnded">
         <button class="btn" @click="endQuestion">Next Question</button>
       </div>
+      <button v-if="isHost" class="btn" @click="loadVideo">Video answer</button>
+      <div class="video-container"></div>
     </div>
     <div v-if="quizEnded">
       <h2 class="title">Quiz Ended</h2>
@@ -56,6 +58,7 @@ import { socketFunctions } from '@/socket'
 import { useAuthStore } from '@/stores/index'
 import LeaderBoardComponent from '@/components/LeaderboardComponent.vue'
 import ConnectionLostComponent from '@/components/ConnectionLostComponent.vue'
+import { environment } from '@/environments/environment'
 
 // Define reactive state variables
 const quizId = ref(0)
@@ -68,7 +71,7 @@ const currentQuestion = ref({
 const selectedAnswer = ref(null)
 const isAnswered = ref(false)
 const answerTimeLeft = ref(1)
-const timePerQuiz = ref(10)
+const timePerQuiz = ref(1)
 const timeLeft = ref(timePerQuiz.value)
 const questionEnded = ref(false)
 const quizEnded = ref(false)
@@ -80,6 +83,8 @@ const optionsMap = {
   option4: 3
 }
 const isLoading = ref(false)
+const playVideo = ref(false)
+const videoStartTime = ref(0)
 
 // Auth store
 const authState = useAuthStore()
@@ -144,7 +149,9 @@ const broadcastQuestion = () => {
     option1: question.option1,
     option2: question.option2,
     option3: question.option3,
-    option4: question.option4
+    option4: question.option4,
+    correctAnswer: question.correctAnswer,
+    timestamp: question.timestamp
   }
   socketFunctions.broadcastQuestion(
     questionWithoutAnswer,
@@ -169,6 +176,7 @@ const loadNextQuestion = () => {
   timeLeft.value = timePerQuiz.value
   questionEnded.value = false
   state.value.answerCounts = [0, 0, 0, 0] // Reset answer counts
+  videoStartTime.value = question.timestamp
   startTimer()
 }
 
@@ -217,6 +225,20 @@ const endQuestion = () => {
     quizEnded.value = true
     socket.disconnect()
   }
+}
+
+const loadVideo = () => {
+  if (playVideo.value) {
+    playVideo.value = false
+    document.querySelector('.video-container').innerHTML = ''
+    return
+  }
+  playVideo.value = true
+  const videoContainer = document.querySelector('.video-container')
+  videoContainer.innerHTML = `
+    <video id="video" width="90%" class="video-player" controls src=${environment.apiEndpoint}/api/users/${authState.userId}/quizzes/${quizId.value}/video></video>
+  `
+  videoContainer.querySelector('#video').currentTime = videoStartTime.value / 1000
 }
 </script>
 
@@ -337,5 +359,16 @@ const endQuestion = () => {
 
 .btn {
   width: 80%;
+  margin: 10px;
+}
+
+.video-player {
+  width: 80%;
+  height: 80%;
+}
+
+.video-container {
+  width: 100%;
+  height: 100%;
 }
 </style>
