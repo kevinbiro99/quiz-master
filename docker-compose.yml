@@ -66,6 +66,7 @@ services:
       - 3000
     environment:
       - DB_HOST=postgres
+      - REDIS_HOST=redis
       - VIRTUAL_HOST=api.quiz-master.tech
       - LETSENCRYPT_HOST=api.quiz-master.tech
     depends_on:

@@ -93,7 +93,7 @@ quizzesRouter.post(
       }
 
       await quizJobQueue.add("quizFromTranscript", {
-        filename: audioFile.filename,
+        filename: textFile.filename,
         uploadDir: uploadDir,
         id,
       });
@@ -102,7 +102,7 @@ quizzesRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  }
+  },
 );
 
 quizzesRouter.post(
@@ -154,7 +154,7 @@ quizzesRouter.post(
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  }
+  },
 );
 
 quizzesRouter.post(
@@ -214,7 +214,7 @@ quizzesRouter.post(
         return res.status(500).json({ error: "Internal server error" });
       }
     }
-  }
+  },
 );
 
 quizzesRouter.get("/:id/quizzes", ensureAuthenticated, async (req, res) => {
@@ -283,7 +283,7 @@ quizzesRouter.get(
     // Include questions in the response
     const questions = await Question.findAll({ where: { QuizId: quiz.id } });
     return res.json({ quiz: quiz, questions: questions });
-  }
+  },
 );
 
 quizzesRouter.get(
@@ -318,7 +318,7 @@ quizzesRouter.get(
     }
     const videoPath = `uploads/${quiz.filename}`;
     return res.sendFile(videoPath, { root: "." });
-  }
+  },
 );
 
 quizzesRouter.delete(
@@ -358,5 +358,5 @@ quizzesRouter.delete(
       where: { id: req.params.quizId },
     });
     return res.json({ message: "Quiz deleted successfully" });
-  }
+  },
 );

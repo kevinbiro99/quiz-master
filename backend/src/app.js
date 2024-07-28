@@ -37,8 +37,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(cors(corsOptions));
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+app.use(bodyParser.json({ limit: "25mb" }));
+app.use(bodyParser.urlencoded({ limit: "25mb", extended: true }));
 
 try {
   await sequelize.authenticate();

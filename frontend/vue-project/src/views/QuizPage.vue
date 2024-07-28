@@ -71,7 +71,7 @@ const currentQuestion = ref({
 const selectedAnswer = ref(null)
 const isAnswered = ref(false)
 const answerTimeLeft = ref(1)
-const timePerQuiz = ref(1)
+const timePerQuiz = ref(10)
 const timeLeft = ref(timePerQuiz.value)
 const questionEnded = ref(false)
 const quizEnded = ref(false)
@@ -132,6 +132,7 @@ const fetchQuiz = () => {
       }
     })
   } catch (error) {
+    isLoading.value = false
     console.error('Error fetching quiz:', error)
   }
 }
@@ -218,6 +219,7 @@ const selectAnswer = (index) => {
 
 const endQuestion = () => {
   isLoading.value = true
+  playVideo.value = false
   if (quizQuestionIndex.value < questions.value.length - 1) {
     socketFunctions.endQuestion()
     broadcastQuestion()
