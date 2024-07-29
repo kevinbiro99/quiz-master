@@ -18,11 +18,11 @@ Billy Zhou - billi.zhou@mail.utoronto.ca
 
 # Video Demo URL:
 
-- TODO
+https://www.youtube.com/watch?v=xPmzac-G4lE
 
 # Brief Description of the Web Application:
 
-QuizMaster is an innovative web application that generates real-time multiplayer quizzes from video content. Users can upload their own videos or provide YouTube links. The application parses the audio to text, integrates with ChatGPT to create quiz questions, and cuts the video to reveal the answers.
+QuizMaster is an innovative web application that generates real-time multiplayer quizzes from video content. Users can upload their own videos, audio files, or transcripts. The application parses the audio to text with Groq Whisper API, integrates with Groq Llama 3 to create quiz questions, and jumps to the timestamp in the video to reveal the answers.
 
 # Required Elements Fulfillment:
 
