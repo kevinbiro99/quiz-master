@@ -156,11 +156,20 @@ const fetchQuiz = () => {
 
 const fetchVideo = () => {
   isLoading.value = true
-  apiService.getQuizFile(state.value.hostId, state.value.quizId).then((res) => {
-    isLoading.value = false
-    fileType.value = res.type.split('/')[0]
-    videoFile.value = URL.createObjectURL(res)
-  })
+  quizId.value = state.value.quizId
+  if (isHost.value) {
+    apiService.getQuizFile(authState.userId, quizId.value).then((res) => {
+      isLoading.value = false
+      fileType.value = res.type.split('/')[0]
+      videoFile.value = URL.createObjectURL(res)
+    })
+  } else {
+    apiService.getQuizFile(state.value.hostId, state.value.quizId).then((res) => {
+      isLoading.value = false
+      fileType.value = res.type.split('/')[0]
+      videoFile.value = URL.createObjectURL(res)
+    })
+  }
 }
 
 const broadcastQuestion = () => {
