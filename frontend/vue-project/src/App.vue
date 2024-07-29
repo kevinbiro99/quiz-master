@@ -68,7 +68,7 @@ onBeforeUnmount(() => {
         <img alt="Vue logo" class="logo" src="@/assets/idea.png" />
         <span>QuizMaster</span>
       </RouterLink>
-      <button class="menu-button" @click="toggleMenu">☰</button>
+      <button class="menu-button btn" @click="toggleMenu">☰</button>
       <nav :class="{ 'nav-open': showMenu }">
         <RouterLink
           to="/"
@@ -117,11 +117,16 @@ onBeforeUnmount(() => {
     </div>
   </header>
 
-  <div v-loading="isLoading" id="content" :class="{ 'quiz-mode': route.name === 'QuizPage' }">
+  <div
+    v-loading="isLoading"
+    id="content"
+    :class="{ 'quiz-mode': route.name === 'QuizPage' }"
+    class="content"
+  >
     <div v-if="showGreeting" class="greeting-container">
       <TheGreeting msg="Welcome to QuizMaster" />
     </div>
-    <main :class="{ 'full-screen': !showGreeting }">
+    <main :class="{ 'full-screen': !showGreeting }" class="main">
       <RouterView />
     </main>
   </div>
@@ -164,6 +169,7 @@ onBeforeUnmount(() => {
   font-size: 1.5rem;
   cursor: pointer;
   display: none;
+  margin: 10px;
 }
 
 nav {
@@ -196,6 +202,14 @@ nav a:active {
   transform: scale(1.05);
 }
 
+.logo-title:hover {
+  background-color: rgb(55, 92, 75);
+  border-radius: 25px;
+  transition:
+    background-color 0.3s ease,
+    transform 0.3s ease;
+}
+
 .nav-open {
   max-height: 500px;
   opacity: 1;
@@ -207,7 +221,7 @@ nav a:active {
   align-items: center;
 }
 
-#content {
+.content {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -242,11 +256,11 @@ nav a:active {
     justify-content: center;
   }
 
-  #content {
+  .content {
     padding: 2rem;
   }
 
-  #content:not(.quiz-mode) {
+  .content:not(.quiz-mode) {
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
@@ -282,7 +296,7 @@ nav a:active {
     opacity: 1;
   }
 
-  #content {
+  .content {
     padding: 0.5rem;
   }
 

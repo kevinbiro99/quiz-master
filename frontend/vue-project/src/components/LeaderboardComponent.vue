@@ -2,7 +2,7 @@
   <div class="leaderboard-wrapper">
     <div class="header">
       <img src="@/assets/leaderboard.png" alt="Leaderboard Icon" class="leaderboard-icon" />
-      <h2 class="header-title">Leaderboard</h2>
+      <h2 class="header-title title">Leaderboard</h2>
     </div>
     <div class="leaderboard-container">
       <div
@@ -119,6 +119,7 @@ export default {
 
 <style scoped>
 @import '@/assets/cols.css';
+@import '@/assets/main.css';
 
 .leaderboard-wrapper {
   text-align: center;

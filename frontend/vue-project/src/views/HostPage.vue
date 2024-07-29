@@ -1,9 +1,9 @@
 <template>
   <div v-loading="isLoading" class="main-content container">
-    <h2>Host a Quiz</h2>
+    <h2 class="title">Host a Quiz</h2>
     <p v-if="!this.authState.isAuthenticated">Must be logged in to host a quiz</p>
     <div v-else>
-      <div v-if="quizzes.length < 1">No quizzes found</div>
+      <div v-if="quizzes.length < 1" class="text">No quizzes found</div>
       <div v-for="quiz in quizzes" :key="quiz.id" class="row quiz-row">
         <div class="col-10 col-sm-10">
           <router-link
@@ -13,7 +13,7 @@
           >
         </div>
         <div class="col-2 col-sm-2">
-          <button @click="deleteQuiz(quiz.id)" class="delete"></button>
+          <button @click="deleteQuiz(quiz.id)" class="delete btn"></button>
         </div>
       </div>
     </div>
@@ -101,6 +101,10 @@ export default {
 <style scoped>
 @import '../assets/cols.css';
 @import '../assets/main.css';
+
+.text {
+  text-align: center;
+}
 
 .quiz-row {
   border-bottom: 1px solid #ccc;

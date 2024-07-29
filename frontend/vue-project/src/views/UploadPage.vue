@@ -1,6 +1,6 @@
 <template>
   <div class="main-content container">
-    <h2>Upload a Quiz</h2>
+    <h2 class="title">Upload a Quiz</h2>
     <div
       class="file-upload"
       @dragover.prevent
@@ -12,7 +12,7 @@
         <img src="@/assets/mp3.png" alt="MP3 File" class="file-icon" />
         <img src="@/assets/mp4.png" alt="MP4 File" class="file-icon" />
       </div>
-      <p>Drag files here to upload or</p>
+      <p class="text">Drag files here to upload or</p>
       <button type="button" class="upload-button">Choose File</button>
       <input
         type="file"
@@ -23,8 +23,8 @@
       />
     </div>
     <div v-if="state.file || state.filename" class="file-card">
-      <p>{{ state.filename }}</p>
-      <p v-if="state.loading">{{ state.loadingMessage }}</p>
+      <p class="text">{{ state.filename }}</p>
+      <p class="text" v-if="state.loading">{{ state.loadingMessage }}</p>
       <div class="progress-bar">
         <div class="progress" :style="{ width: state.uploadProgress + '%' }"></div>
       </div>
@@ -36,10 +36,10 @@
     >
       Submit
     </button>
-    <p v-if="state.fileUploaded">File Uploaded!</p>
-    <p>{{ state.errorMessage }}</p>
+    <p class="text" v-if="state.fileUploaded">File Uploaded!</p>
+    <p class="text">{{ state.errorMessage }}</p>
     <div v-if="state.loading" class="job-progress">
-      <p>Job Progress:</p>
+      <p class="text">Job Progress:</p>
       <div class="progress-bar">
         <div
           class="progress"
@@ -279,6 +279,7 @@ export default {
 
 <style scoped>
 @import '@/assets/base.css';
+@import '@/assets/main.css';
 
 .main-content {
   display: flex;
@@ -319,6 +320,7 @@ export default {
 }
 
 .upload-button {
+  width: 80%;
   background-color: var(--color-highlight);
   color: var(--color-text);
   padding: 10px 20px;
@@ -332,6 +334,7 @@ export default {
 }
 
 .submit-button {
+  width: 80%;
   margin-top: 20px;
   background-color: var(--color-highlight);
   color: var(--color-text);
@@ -443,5 +446,10 @@ export default {
   100% {
     border-color: var(--color-border);
   }
+}
+
+.text {
+  text-align: center;
+  font-size: 1.2rem;
 }
 </style>

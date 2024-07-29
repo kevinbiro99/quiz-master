@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3>Participants:</h3>
+    <h2 class="title">Participants:</h2>
     <div class="participants-grid">
       <div v-for="participant in participants" :key="participant.username" class="participant-card">
         {{ participant.username }}
@@ -18,6 +18,8 @@ const participants = computed(() => state.participants)
 </script>
 
 <style scoped>
+@import '../assets/main.css';
+
 .participants-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

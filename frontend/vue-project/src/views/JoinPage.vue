@@ -2,7 +2,7 @@
   <div class="main-content">
     <div class="container">
       <ConnectionLostComponent :visible="!state.connected" />
-      <h2>Join a Quiz</h2>
+      <h2 class="title">Join a Quiz</h2>
       <p v-if="state.error">Error: {{ state.error }}</p>
       <p v-if="state.roomCode">Joined Room: {{ state.roomCode }}</p>
       <form @submit.prevent="joinQuiz">
@@ -11,7 +11,7 @@
           <input
             type="text"
             v-model="username"
-            placeholder="Optional: Username"
+            :placeholder="usernamePlaceholder"
             :required="!authStore.isAuthenticated"
           />
         </div>
@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { socket, state, socketFunctions } from '@/socket'
 import { useAuthStore } from '@/stores/index'
@@ -37,6 +37,9 @@ const code = ref('')
 const username = ref('')
 const router = useRouter()
 const route = useRoute()
+const usernamePlaceholder = computed(() => {
+  return authStore.isAuthenticated ? 'Optional: Username' : 'Username'
+})
 
 const joinQuiz = () => {
   if (code.value) {
@@ -73,6 +76,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 @import '../assets/form.css';
+@import '../assets/main.css';
 
 input {
   padding: 10px;

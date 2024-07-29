@@ -1,18 +1,14 @@
 @import '../../assets/main.css';
 
-div {
+.align {
   text-align: center;
 }
 
-h1 {
+.title {
   color: var(--color-text);
 }
 
-p {
-  font-size: 20px;
-}
-
-table {
+.table {
   width: 100%;
   border-collapse: collapse;
 }
@@ -29,15 +25,15 @@ table {
   margin-bottom: 20px;
 }
 
-th,
-td {
+.th,
+.td {
   border: 1px solid var(--color-border);
   padding: 8px;
   text-align: left;
   word-break: break-all;
 }
 
-th {
+.th {
   background-color: var(--color-background-soft);
   font-weight: bold;
 }
@@ -46,6 +42,7 @@ th {
   color: var(--color-text);
   margin-top: 10px;
   text-align: center;
+  font-size: 20px;
 }
 
 .no-wrap {

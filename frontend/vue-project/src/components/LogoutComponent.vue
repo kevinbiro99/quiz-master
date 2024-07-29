@@ -56,6 +56,8 @@ export default {
   margin: 5px 20px;
   cursor: pointer;
   border-radius: 5px;
+  width: 80%;
+  padding: 12px;
 }
 
 .logout:hover {

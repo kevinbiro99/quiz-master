@@ -1,6 +1,7 @@
 @import '../../assets/form.css';
+@import '../../assets/main.css';
 
-h2 {
+.title {
   text-align: center;
   color: var(--color-text);
   margin-bottom: 20px;

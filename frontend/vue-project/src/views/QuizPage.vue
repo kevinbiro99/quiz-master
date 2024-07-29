@@ -3,7 +3,7 @@
     <ConnectionLostComponent :visible="!state.connected" />
     <h1>{{ state.title }} : {{ state.questionIndex + 1 + '/' + state.numQuestions }}</h1>
     <div v-if="!questionEnded" class="question-container">
-      <h2>{{ currentQuestion.text }}</h2>
+      <h2 class="title">{{ currentQuestion.text }}</h2>
       <div class="timer-bar-container">
         <div class="timer-bar" :style="{ width: timeBarWidth + '%' }"></div>
       </div>
@@ -23,7 +23,7 @@
       </div>
     </div>
     <div class="results" v-else>
-      <h2>Question Results: {{ currentQuestion.text }}</h2>
+      <h2 class="title">Question Results: {{ currentQuestion.text }}</h2>
       <div class="results-container">
         <div
           v-for="(choice, index) in currentQuestion.choices"
@@ -36,15 +36,17 @@
           <div class="result-bar"></div>
         </div>
       </div>
-      <div v-if="isHost && !quizEnded">
+      <div v-if="isHost && !quizEnded" class="next-question-box">
         <button class="btn" @click="endQuestion">Next Question</button>
       </div>
-      <button v-if="fileType !== 'txt' && fileType !== 'text'" class="btn" @click="loadAnswer">
-        Load answer
-      </button>
+      <div class="next-question-box">
+        <button v-if="fileType !== 'txt' && fileType !== 'text'" class="btn" @click="loadAnswer">
+          Load answer
+        </button>
+      </div>
       <div class="video-container"></div>
     </div>
-    <div v-if="quizEnded">
+    <div v-if="quizEnded" class="quiz-ended">
       <h2 class="title">Quiz Ended</h2>
       <router-link class="btn" to="/">Back to Home</router-link>
     </div>
@@ -143,7 +145,9 @@ const fetchQuiz = () => {
 }
 
 const fetchVideo = () => {
+  isLoading.value = true
   apiService.getQuizFile(state.value.hostId, state.value.quizId).then((res) => {
+    isLoading.value = false
     fileType.value = res.type.split('/')[0]
     videoFile.value = URL.createObjectURL(res)
   })
@@ -175,6 +179,7 @@ const broadcastQuestion = () => {
 }
 
 const loadNextQuestion = () => {
+  playVideo.value = false
   const question = state.value.question
   currentQuestion.value.text = question.text
   currentQuestion.value.choices = [
@@ -383,18 +388,32 @@ const loadAnswer = () => {
   margin: 10px;
 }
 
+.next-question-box {
+  display: flex;
+  justify-content: center;
+}
+
 .video-player {
   width: 80%;
   height: 80%;
+  margin: 20px;
 }
 
 .audio-player {
   width: 80%;
   height: 40%;
+  margin: 20px;
 }
 
 .video-container {
   width: 100%;
   height: 100%;
+  justify-content: center;
+  display: flex;
+  margin: 20px;
+}
+
+.quiz-ended {
+  margin: 10px;
 }
 </style>

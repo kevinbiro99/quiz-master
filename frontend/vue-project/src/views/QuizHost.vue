@@ -1,21 +1,23 @@
 <template>
   <div v-loading="isLoading" class="main-content container">
-    <h2>Host Quiz: {{ quizTitle }}</h2>
-    <div>
+    <h2 class="title">Host Quiz: {{ quizTitle }}</h2>
+    <div class="box">
       <button
         v-if="state.roomCode.length < 1"
         :class="{ disabled: state.roomCode.length > 0 }"
         :disabled="state.roomCode.length > 0"
         @click="startSession"
+        class="btn"
       >
         Start Session
       </button>
-      <div v-if="state.roomCode.length > 0">
-        <p>Room Created: {{ state.roomCode }}</p>
+      <div v-if="state.roomCode.length > 0" class="inner-box">
+        <p class="text">Room Created: {{ state.roomCode }}</p>
         <button
           :class="{ disabled: state.participants.length < 1 }"
           :disabled="state.participants.length < 1"
           @click="startQuiz"
+          class="btn"
         >
           Start Quiz
         </button>
@@ -96,11 +98,25 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-h1 {
-  color: #969f96;
+@import '../assets/main.css';
+
+.box {
+  display: flex;
+  justify-content: center;
 }
 
-button {
+.inner-box {
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.title {
+  text-align: center;
+}
+
+.btn {
   background-color: #00bd7e;
   color: #fff;
   border: none;
@@ -111,16 +127,18 @@ button {
   transition: background-color 0.3s ease;
 }
 
-button:hover {
+.btn:hover {
   background-color: #008c63;
 }
 
-button.disabled {
+.btn.disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-p {
+.text {
   color: #969f96;
+  text-align: center;
+  font-size: 1.3rem;
 }
 </style>

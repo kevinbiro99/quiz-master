@@ -313,7 +313,11 @@ quizzesRouter.get("/:id/quizzes/:quizId/video", async (req, res) => {
   if (!quiz) {
     return res.status(404).json({ error: "Quiz not found" });
   }
-  if (!quiz.filename || quiz.filename.split(".").pop() !== "mp4") {
+  if (
+    !quiz.filename ||
+    (quiz.filename.split(".").pop() !== "mp4" &&
+      quiz.filename.split(".").pop() !== "mp3")
+  ) {
     return res.status(404).json({ error: "Video not found" });
   }
   if (!fs.existsSync(`uploads/${quiz.filename}`)) {

@@ -58,7 +58,8 @@ export const socketFunctions = {
       (state.title = ''),
       (state.hostConnected = false),
       (state.answerIndex = 0),
-      (state.hostSocketId = '')
+      (state.hostSocketId = ''),
+      (state.hostId = '')
   },
   selectAnswer(answerIndex, timeLeft) {
     socket.emit('selectAnswer', {

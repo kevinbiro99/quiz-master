@@ -1,7 +1,7 @@
 <template>
   <div>
     <img src="@/assets/profile.png" alt="User Profile" class="profile-image" />
-    <div>{{ authState.username }}</div>
+    <div class="text">{{ authState.username }}</div>
   </div>
 </template>
 
@@ -18,6 +18,10 @@ export default {
 </script>
 
 <style scoped>
+.text {
+  text-align: center;
+}
+
 .profile-image {
   width: 50px;
   height: 50px;
