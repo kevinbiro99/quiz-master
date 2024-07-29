@@ -2,8 +2,11 @@ import { environment } from '@/environments/environment'
 import fetchWrapper from './fetch-wrapper'
 import fetchWrapperFile from './fetch-wrapper-file'
 
-export default {
-  getUsers(page: number, limit = 10) {
+export default (function () {
+  'use strict'
+  const module: any = {}
+
+  module.getUsers = function (page: number, limit = 10) {
     return fetchWrapper(`/api/users/?page=${page}&limit=${limit}`, {
       method: 'GET',
       headers: {
@@ -12,9 +15,9 @@ export default {
       },
       credentials: 'include'
     })
-  },
+  }
 
-  signup(username: any, password: any) {
+  module.signup = function (username: any, password: any) {
     return fetchWrapper(`/api/users/signup`, {
       method: 'POST',
       headers: {
@@ -23,9 +26,9 @@ export default {
       },
       body: JSON.stringify({ username, password })
     })
-  },
+  }
 
-  signin(username: any, password: any) {
+  module.signin = function (username: any, password: any) {
     return fetchWrapper(`/api/users/signin`, {
       method: 'POST',
       headers: {
@@ -34,21 +37,21 @@ export default {
       },
       body: JSON.stringify({ username, password })
     })
-  },
+  }
 
-  googleSignin() {
+  module.googleSignin = function () {
     return window.open(`${environment.apiEndpoint}/auth/google`, '_self')
-  },
+  }
 
-  signout() {
+  module.signout = function () {
     return fetchWrapper(`/auth/logout`)
-  },
+  }
 
-  me() {
+  module.me = function () {
     return fetchWrapper(`/api/users/me`)
-  },
+  }
 
-  getQuizzes(userId: string, page: number, limit = 5) {
+  module.getQuizzes = function (userId: string, page: number, limit = 5) {
     return fetchWrapper(`/api/users/${userId}/quizzes?page=${page}&limit=${limit}`, {
       method: 'GET',
       headers: {
@@ -56,9 +59,9 @@ export default {
         'Content-Type': 'application/json'
       }
     })
-  },
+  }
 
-  getQuiz(userId: string, quizId: number) {
+  module.getQuiz = function (userId: string, quizId: number) {
     return fetchWrapper(`/api/users/${userId}/quizzes/${quizId}`, {
       method: 'GET',
       headers: {
@@ -66,9 +69,9 @@ export default {
         'Content-Type': 'application/json'
       }
     })
-  },
+  }
 
-  deleteQuiz(userId: string, quizId: any) {
+  module.deleteQuiz = function (userId: string, quizId: any) {
     return fetchWrapper(`/api/users/${userId}/quizzes/${quizId}`, {
       method: 'DELETE',
       headers: {
@@ -76,15 +79,15 @@ export default {
         'Content-Type': 'application/json'
       }
     })
-  },
+  }
 
-  getQuizFile(userId: string, quizId: any) {
+  module.getQuizFile = function (userId: string, quizId: any) {
     return fetchWrapperFile(`/api/users/${userId}/quizzes/${quizId}/video`, {
       method: 'GET'
     })
-  },
+  }
 
-  createQuizFromTxt(userId: any, textFile: string | Blob) {
+  module.createQuizFromTxt = function (userId: any, textFile: string | Blob) {
     const formData = new FormData()
     formData.append('textFile', textFile)
     return fetchWrapper(`/api/users/${userId}/quizzes/text`, {
@@ -94,9 +97,9 @@ export default {
       },
       body: formData
     })
-  },
+  }
 
-  createQuizFromAudio(userId: any, audioFile: string | Blob) {
+  module.createQuizFromAudio = function (userId: any, audioFile: string | Blob) {
     const formData = new FormData()
     formData.append('audioFile', audioFile)
     return fetchWrapper(`/api/users/${userId}/quizzes/audio`, {
@@ -106,9 +109,9 @@ export default {
       },
       body: formData
     })
-  },
+  }
 
-  createQuizFromVideo(userId: any, videoFile: string | Blob) {
+  module.createQuizFromVideo = function (userId: any, videoFile: string | Blob) {
     const formData = new FormData()
     formData.append('videoFile', videoFile)
     return fetchWrapper(`/api/users/${userId}/quizzes/video`, {
@@ -119,4 +122,6 @@ export default {
       body: formData
     })
   }
-}
+
+  return module
+})()
