@@ -1,4 +1,5 @@
 <script setup lang="ts">
+'use strict'
 defineProps<{
   msg: string
 }>()

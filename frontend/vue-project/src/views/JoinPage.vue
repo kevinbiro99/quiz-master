@@ -25,6 +25,7 @@
 </template>
 
 <script setup>
+'use strict'
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { socket, state, socketFunctions } from '@/socket'

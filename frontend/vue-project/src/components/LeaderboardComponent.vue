@@ -35,6 +35,9 @@ export default {
       tweenedScores: {}
     }
   },
+  setup() {
+    'use strict'
+  },
   computed: {
     state() {
       return state

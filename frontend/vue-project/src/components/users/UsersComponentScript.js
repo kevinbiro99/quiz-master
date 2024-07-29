@@ -5,6 +5,9 @@ export default {
   directives: {
     loading: vLoading
   },
+  setup() {
+    'use strict'
+  },
   data() {
     return {
       users: [],

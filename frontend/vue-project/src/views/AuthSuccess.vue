@@ -18,6 +18,7 @@ export default {
     this.isLoading.value = false
   },
   setup() {
+    'use strict'
     const error = ref('')
     const loading = ref(true)
     let isLoading = ref(false)

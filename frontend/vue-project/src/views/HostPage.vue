@@ -36,6 +36,7 @@ export default {
     loading: vLoading
   },
   setup() {
+    'use strict'
     const authState = useAuthStore()
     const isLoading = ref(false)
     return { authState, isLoading }

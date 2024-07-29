@@ -132,6 +132,8 @@ const extractQuestions = (response) => {
           question.timestamp =
             (parseInt(minutes) * 60 + parseInt(seconds)) * 1000;
         }
+        question.timestamp -= 2000;
+        question.timestamp = question.timestamp < 0 ? 0 : question.timestamp;
       } else {
         answerPatterns.map((pattern) => {
           const string = pattern.exec(temp);

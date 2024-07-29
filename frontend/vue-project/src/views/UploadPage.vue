@@ -59,6 +59,7 @@ import { environment } from '@/environments/environment'
 
 export default {
   setup() {
+    'use strict'
     const authState = useAuthStore()
     const router = useRouter()
     const fileInput = ref(null)

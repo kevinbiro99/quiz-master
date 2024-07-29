@@ -1,4 +1,5 @@
 <script setup lang="ts">
+'use strict'
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router'
 import TheGreeting from './components/TheGreeting.vue'

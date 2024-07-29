@@ -61,6 +61,7 @@
 </template>
 
 <script setup>
+'use strict'
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { socket, state as socketState } from '@/socket'
 import apiService from '@/services/api-service'

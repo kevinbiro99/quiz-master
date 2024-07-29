@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/index'
 export default {
   name: 'ProfileComponent',
   setup() {
+    'use strict'
     const authState = useAuthStore()
     return { authState }
   }

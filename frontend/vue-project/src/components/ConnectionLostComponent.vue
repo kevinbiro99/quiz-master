@@ -15,6 +15,9 @@ export default {
       type: Boolean,
       required: true
     }
+  },
+  setup() {
+    'use strict'
   }
 }
 </script>

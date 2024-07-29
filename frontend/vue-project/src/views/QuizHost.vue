@@ -28,6 +28,7 @@
 </template>
 
 <script setup>
+'use strict'
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import apiService from '../services/api-service'

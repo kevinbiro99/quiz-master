@@ -1,4 +1,5 @@
 <script setup lang="ts">
+'use strict'
 import UsersComponent from '../components/users/UsersComponent.vue'
 </script>
 

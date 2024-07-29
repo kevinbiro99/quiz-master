@@ -11,6 +11,7 @@
 </template>
 
 <script setup>
+'use strict'
 import { computed } from 'vue'
 import { state } from '@/socket'
 

@@ -21,6 +21,7 @@ export default {
     this.isLoading.value = false
   },
   setup() {
+    'use strict'
     const route = useRoute()
     const isQuizPage = computed(() => route.name === 'QuizPage' && state.quizStarted)
     const isLoading = ref(false)

@@ -11,6 +11,7 @@ export default {
     this.isLoading.value = false
   },
   setup() {
+    'use strict'
     const username = ref('')
     const password = ref('')
     const errorMessage = ref('')
