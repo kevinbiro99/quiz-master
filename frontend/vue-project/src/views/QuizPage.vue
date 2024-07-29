@@ -258,24 +258,34 @@ const endQuestion = () => {
 }
 
 const loadAnswer = () => {
-  if (playVideo.value) {
-    playVideo.value = false
-    document.querySelector('.video-container').innerHTML = ''
-    return
-  }
-  playVideo.value = true
-  const videoContainer = document.querySelector('.video-container')
-  if (fileType.value === 'video') {
-    videoContainer.innerHTML = `
+  isLoading.value = true
+  apiService
+    .getQuizFile(state.value.hostId, state.value.quizId)
+    .then((res) => {
+      isLoading.value = false
+      fileType.value = res.type.split('/')[0]
+      videoFile.value = URL.createObjectURL(res)
+    })
+    .then(() => {
+      if (playVideo.value) {
+        playVideo.value = false
+        document.querySelector('.video-container').innerHTML = ''
+        return
+      }
+      playVideo.value = true
+      const videoContainer = document.querySelector('.video-container')
+      if (fileType.value === 'video') {
+        videoContainer.innerHTML = `
       <video id="video" width="90%" class="video-player" controls src=${videoFile.value}></video>
     `
-    videoContainer.querySelector('#video').currentTime = videoStartTime.value / 1000
-  } else if (fileType.value === 'audio') {
-    videoContainer.innerHTML = `
+        videoContainer.querySelector('#video').currentTime = videoStartTime.value / 1000
+      } else if (fileType.value === 'audio') {
+        videoContainer.innerHTML = `
       <audio id="audio" width="90%" class="audio-player" controls src=${videoFile.value}></audio>
     `
-    videoContainer.querySelector('#audio').currentTime = videoStartTime.value / 1000
-  }
+        videoContainer.querySelector('#audio').currentTime = videoStartTime.value / 1000
+      }
+    })
 }
 
 const doneWithVideo = () => {
