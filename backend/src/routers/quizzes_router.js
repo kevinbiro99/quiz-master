@@ -18,6 +18,12 @@ if (!existsSync(uploadDir)) {
   mkdirSync(uploadDir);
 }
 
+// Ensure assets directory exists
+const assetsDir = "assets/";
+if (!existsSync(assetsDir)) {
+  mkdirSync(assetsDir);
+}
+
 ffmpeg.setFfmpegPath(ffmpegStatic);
 
 const storage = multer.diskStorage({

@@ -80,7 +80,7 @@ const currentQuestion = ref({
 const selectedAnswer = ref(null)
 const isAnswered = ref(false)
 const answerTimeLeft = ref(1)
-const timePerQuiz = ref(1)
+const timePerQuiz = ref(10)
 const timeLeft = ref(timePerQuiz.value)
 const questionEnded = ref(false)
 const quizEnded = ref(false)
@@ -431,8 +431,8 @@ const doneWithVideo = () => {
   height: 100%;
   justify-content: center;
   align-items: center;
-  margin-left: 5%;
-  margin-right: 5%;
+  text-align: center;
+  padding: 10px;
 }
 
 .quiz-ended {
