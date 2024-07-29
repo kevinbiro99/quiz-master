@@ -67,7 +67,7 @@ const startSession = () => {
 const startQuiz = () => {
   if (state.roomCode.length > 0 && state.participants.length > 0) {
     isLoading.value = true
-    socketFunctions.startQuiz(state.roomCode, quizId.value)
+    socketFunctions.startQuiz(state.roomCode, quizId.value, authState.userId)
   } else {
     alert('Cannot start quiz without participants')
   }

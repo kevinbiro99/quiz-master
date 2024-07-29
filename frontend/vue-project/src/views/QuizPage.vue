@@ -39,11 +39,7 @@
       <div v-if="isHost && !quizEnded">
         <button class="btn" @click="endQuestion">Next Question</button>
       </div>
-      <button
-        v-if="isHost && fileType !== 'txt' && fileType !== 'text'"
-        class="btn"
-        @click="loadAnswer"
-      >
+      <button v-if="fileType !== 'txt' && fileType !== 'text'" class="btn" @click="loadAnswer">
         Load answer
       </button>
       <div class="video-container"></div>
@@ -88,9 +84,10 @@ const optionsMap = {
   option4: 3
 }
 const isLoading = ref(false)
-const playVideo = ref(false)
 const fileType = ref('')
 const videoStartTime = ref(0)
+const videoFile = ref(null)
+const playVideo = ref(false)
 
 // Auth store
 const authState = useAuthStore()
@@ -105,6 +102,7 @@ const correctAnswer = computed(() => state.value.answerIndex)
 // Lifecycle hooks
 onMounted(() => {
   fetchQuiz()
+  fetchVideo()
 })
 
 onBeforeUnmount(() => {
@@ -142,6 +140,13 @@ const fetchQuiz = () => {
     isLoading.value = false
     console.error('Error fetching quiz:', error)
   }
+}
+
+const fetchVideo = () => {
+  apiService.getQuizFile(state.value.hostId, state.value.quizId).then((res) => {
+    fileType.value = res.type.split('/')[0]
+    videoFile.value = URL.createObjectURL(res)
+  })
 }
 
 const broadcastQuestion = () => {
@@ -244,21 +249,17 @@ const loadAnswer = () => {
   }
   playVideo.value = true
   const videoContainer = document.querySelector('.video-container')
-  apiService.getQuizFile(authState.userId, quizId.value).then((res) => {
-    fileType.value = res.type.split('/')[0]
-    const blobUrl = URL.createObjectURL(res)
-    if (fileType.value === 'video') {
-      videoContainer.innerHTML = `
-        <video id="video" width="90%" class="video-player" controls src=${blobUrl}></video>
-      `
-      videoContainer.querySelector('#video').currentTime = videoStartTime.value / 1000
-    } else if (fileType.value === 'audio') {
-      videoContainer.innerHTML = `
-        <audio id="audio" width="90%" class="audio-player" controls src=${blobUrl}></audio>
-      `
-      videoContainer.querySelector('#audio').currentTime = videoStartTime.value / 1000
-    }
-  })
+  if (fileType.value === 'video') {
+    videoContainer.innerHTML = `
+      <video id="video" width="90%" class="video-player" controls src=${videoFile.value}></video>
+    `
+    videoContainer.querySelector('#video').currentTime = videoStartTime.value / 1000
+  } else if (fileType.value === 'audio') {
+    videoContainer.innerHTML = `
+      <audio id="audio" width="90%" class="audio-player" controls src=${videoFile.value}></audio>
+    `
+    videoContainer.querySelector('#audio').currentTime = videoStartTime.value / 1000
+  }
 }
 </script>
 

@@ -91,7 +91,7 @@ export const initializeSocket = (server, sessionMiddleware) => {
 
       socket.on(
         "startQuiz",
-        wrapAuthenticated(async (code, quizId) => {
+        wrapAuthenticated(async (code, quizId, hostId) => {
           if (!socket.isHost) {
             return;
           }
@@ -108,7 +108,7 @@ export const initializeSocket = (server, sessionMiddleware) => {
             return;
           }
           socket.quizId = quizId;
-          io.to(code).emit("quizStarted");
+          io.to(code).emit("quizStarted", { quizId, hostId });
         }),
       );
 

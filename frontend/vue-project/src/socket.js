@@ -17,8 +17,9 @@ export const state = reactive({
   title: '',
   hostConnected: false,
   hostSocketId: '',
-  answerIndex: 0 // the host will store the correct answer index here after broadcasting a question
+  answerIndex: 0, // the host will store the correct answer index here after broadcasting a question
   // participants will have this updated after submitting an answer
+  hostId: ''
 })
 
 const URL = environment.apiEndpoint
@@ -37,9 +38,10 @@ export const socketFunctions = {
     state.quizId = quizId
     socket.emit('createRoom', username, quizId)
   },
-  startQuiz(code, quizId) {
+  startQuiz(code, quizId, hostId) {
     state.quizId = quizId
-    socket.emit('startQuiz', code, quizId)
+    state.hostId = hostId
+    socket.emit('startQuiz', code, quizId, hostId)
   },
   resetState() {
     state.connected = false
@@ -130,8 +132,10 @@ socket.on('userJoined', ({ code, username, hostSocketId }) => {
   }
 })
 
-socket.on('quizStarted', () => {
+socket.on('quizStarted', ({ quizId, hostId }) => {
   state.quizStarted = true
+  state.quizId = quizId
+  state.hostId = hostId
 })
 
 socket.on('answerSelected', ({ answerIndex }) => {

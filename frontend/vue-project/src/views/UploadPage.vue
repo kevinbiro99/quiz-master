@@ -98,7 +98,7 @@ export default {
         state.filename = ''
         state.invalidFile = true
         state.errorMessage =
-          file.size > MAX_FILE_SIZE
+          file?.size > MAX_FILE_SIZE
             ? 'File size exceeds 25MB. Please upload a smaller file.'
             : 'Invalid file type. Please upload a .txt, .mp3, or .mp4 file.'
       }
