@@ -101,8 +101,15 @@ quizzesRouter.post(
         .status(202)
         .json({ message: "Quiz creation in progress", jobId: job.id });
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Internal server error" });
+      if (error.name === "SequelizeForeignKeyConstraintError") {
+        return res.status(422).json({ error: "User not found" });
+      } else if (error.name === "SequelizeValidationError") {
+        return res.status(422).json({
+          error: "Invalid input parameters. Expected id and file",
+        });
+      } else {
+        return res.status(400).json({ error: "Cannot create quiz" });
+      }
     }
   },
 );
@@ -155,7 +162,15 @@ quizzesRouter.post(
         .status(202)
         .json({ message: "Quiz creation in progress", jobId: job.id });
     } catch (error) {
-      console.error(error);
+      if (error.name === "SequelizeForeignKeyConstraintError") {
+        return res.status(422).json({ error: "User not found" });
+      } else if (error.name === "SequelizeValidationError") {
+        return res.status(422).json({
+          error: "Invalid input parameters. Expected id and file",
+        });
+      } else {
+        return res.status(400).json({ error: "Cannot create quiz" });
+      }
       return res.status(500).json({ error: "Internal server error" });
     }
   },
@@ -216,8 +231,7 @@ quizzesRouter.post(
           error: "Invalid input parameters. Expected id and file",
         });
       } else {
-        console.error(error);
-        return res.status(500).json({ error: "Internal server error" });
+        return res.status(400).json({ error: "Cannot create quiz" });
       }
     }
   },
@@ -254,6 +268,9 @@ quizzesRouter.get("/:id/quizzes", ensureAuthenticated, async (req, res) => {
     offset,
   });
   const totalQuizzes = await Quiz.count({ where: { UserId: req.params.id } });
+  if (quizzes === null || totalQuizzes === null) {
+    return res.status(404).json({ error: "Quizzes not found" });
+  }
   return res.json({ quizzes, numPages: Math.ceil(totalQuizzes / limit) });
 });
 
@@ -288,6 +305,9 @@ quizzesRouter.get(
     }
     // Include questions in the response
     const questions = await Question.findAll({ where: { QuizId: quiz.id } });
+    if (questions === null) {
+      return res.status(404).json({ error: "Questions not found" });
+    }
     return res.json({ quiz: quiz, questions: questions });
   },
 );
@@ -303,7 +323,6 @@ quizzesRouter.get("/:id/quizzes/:quizId/video", async (req, res) => {
     return res.status(422).json({ error: "Invalid quiz ID" });
   }
   const user = await User.findByPk(req.params.id);
-
   if (user === null) {
     return res.status(404).json({ error: "User not found" });
   }
@@ -354,15 +373,21 @@ quizzesRouter.delete(
     const quiz = await Quiz.findOne({
       where: { id: req.params.quizId },
     });
-
     if (!quiz) {
       return res.status(404).json({ error: "Quiz not found" });
     }
-    const questions = await Question.destroy({ where: { QuizId: quiz.id } });
-    fs.unlinkSync(uploadDir + quiz.filename);
-    const quizDeleted = await Quiz.destroy({
-      where: { id: req.params.quizId },
-    });
-    return res.json({ message: "Quiz deleted successfully" });
+    try {
+      const questions = await Question.destroy({ where: { QuizId: quiz.id } });
+      fs.unlinkSync(uploadDir + quiz.filename);
+      const quizDeleted = await Quiz.destroy({
+        where: { id: req.params.quizId },
+      });
+      return res.json({ message: "Quiz deleted successfully" });
+    } catch (error) {
+      if (error.name === "SequelizeForeignKeyConstraintError") {
+        return res.status(422).json({ error: "Quiz not found" });
+      }
+      return res.status(500).json({ error: "Internal server error" });
+    }
   },
 );

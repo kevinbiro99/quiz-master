@@ -44,13 +44,17 @@
       <p class="text">
         GPT code from
         <a class="link" href="https://console.groq.com/" target="_blank" rel="noopener noreferrer"
-          >flaticon</a
+          >GroqCloud</a
         >.
       </p>
       <p class="text">
-        Video player code and css from
-        <a class="link" href="https://videojs.com/" target="_blank" rel="noopener noreferrer">
-          flaticon</a
+        BullBoard code from
+        <a
+          class="link"
+          href="https://www.digitalocean.com/community/tutorials/how-to-handle-asynchronous-tasks-with-node-js-and-bullmq"
+          target="_blank"
+          rel="noopener noreferrer"
+          >DigitalOcean</a
         >.
       </p>
     </div>

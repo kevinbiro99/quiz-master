@@ -20,39 +20,47 @@ try {
   console.error("Unable to connect to the database:", error);
 }
 
+export const quizJobQueue = new Queue("quizJobQueue", {
+  connection: { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT },
+});
+
 async function transcriptGPT(fileContent) {
-  const prompt = `Generate a 4 choice quiz with the answer after each question along with timestamp (minutes:seconds) that reveals the answer based on the transcript below. Follow this sample format:
-                    **title for quiz**
+  const prompt = `
+  Generate a 4 choice quiz with the answer after each question along with
+  timestamp (minutes:seconds) that reveals the answer based on the
+  transcript below. Follow this sample format:
+  **title for quiz**
 
-                    **question**
-                    **choice a**
-                    **choice b**
-                    **choice c**
-                    **choice d**
-                    **answer**
-                    **timestamp**
+  **question**
+  **choice a**
+  **choice b**
+  **choice c**
+  **choice d**
+  **answer**
+  **timestamp**
 
-                    **question**...
+  **question**...
 
-                    An example of a quiz with 2 questions would be (including asterisks for formatting purposes):
-                    **Sample Quiz**
+  An example of a quiz with 2 questions would be
+  (including asterisks for formatting purposes):
+  **Sample Quiz**
 
-                    **Question 1** What is the capital of France?
-                    **Choice A** Berlin
-                    **Choice B** Madrid
-                    **Choice C** Paris
-                    **Choice D** Rome
-                    **Answer** C) Paris
-                    **Timestamp** 10:23
+  **Question 1** What is the capital of France?
+  **Choice A** Berlin
+  **Choice B** Madrid
+  **Choice C** Paris
+  **Choice D** Rome
+  **Answer** C) Paris
+  **Timestamp** 10:23
 
-                    **Question 2** What is the capital of Germany?
-                    **Choice A** Berlin
-                    **Choice B** Madrid
-                    **Choice C** Paris
-                    **Choice D** Rome
-                    **Answer** A) Berlin
-                    **Timestamp** 51:10
-                    `;
+  **Question 2** What is the capital of Germany?
+  **Choice A** Berlin
+  **Choice B** Madrid
+  **Choice C** Paris
+  **Choice D** Rome
+  **Answer** A) Berlin
+  **Timestamp** 51:10
+  `;
 
   const chatCompletion = await groq.chat.completions.create({
     messages: [
@@ -69,13 +77,13 @@ async function transcriptGPT(fileContent) {
 }
 
 /* Assumptions:
-  - First line of every response is title
-  - Every question has at least a question, 4 choices,
-    an answer, and timestamp, in that order with each occupying 1 or 2 lines
-  - ** is used to indicate the start of a question, choice, answer, or
-    timestamp
-  - If correct answer cannot be extracted, first choice is assumed to be
-    correct
+- First line of every response is title
+- Every question has at least a question, 4 choices,
+  an answer, and timestamp, in that order with each occupying 1 or 2 lines
+- ** is used to indicate the start of a question, choice, answer, or
+  timestamp
+- If correct answer cannot be extracted, first choice is assumed to be
+  correct
 */
 const extractQuestions = (response) => {
   const lines = response.split("\n");
@@ -118,7 +126,7 @@ const extractQuestions = (response) => {
         const timeInSeconds = /\d+.\d\d/.exec(temp);
         const timeInMinutes = /\d+:\d\d/.exec(temp);
         if (timeInSeconds !== null) {
-          question.timestamp = 1000 * parseInt(timeInSeconds[0].split(":")[0]);
+          question.timestamp = 1000 * parseInt(timeInSeconds[0].split(".")[0]);
         } else if (timeInMinutes !== null) {
           const [minutes, seconds] = timeInMinutes[0].split(":");
           question.timestamp =
@@ -126,7 +134,7 @@ const extractQuestions = (response) => {
         }
       } else {
         answerPatterns.map((pattern) => {
-          let string = pattern.exec(temp);
+          const string = pattern.exec(temp);
           if (string !== null) {
             question.answer = string[0].split(" ")[1];
           }
@@ -151,9 +159,9 @@ async function transcribeAudio(audioFile) {
   const transcription = await groq.audio.transcriptions.create({
     file: fs.createReadStream(audioFile),
     model: "whisper-large-v3",
-    response_format: "verbose_json", // Optional
-    language: "en", // Optional
-    temperature: 0.0, // Optional
+    response_format: "verbose_json",
+    language: "en",
+    temperature: 0.0,
   });
 
   const content = transcription.segments
@@ -178,7 +186,6 @@ async function createQuiz(id, title, filename, questions) {
     }),
   );
 
-  //TODO: Unhandled promise rejection
   await Promise.all(questionPromises).catch((error) => {
     if (error) return null;
   });
@@ -251,21 +258,19 @@ const jobsHandlers = {
   quizFromTranscript: onQuizFromTranscript,
 };
 
-export const quizJobQueue = new Queue("quizJobQueue", {
-  connection: { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT },
-});
-
 const quizWorker = new Worker(
   "quizJobQueue",
   async (job) => {
-    console.log(`Processing job with ID ${job.id}`);
     const handler = jobsHandlers[job.name];
     if (handler) {
       return handler(job);
     }
   },
   {
-    connection: { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT },
+    connection: {
+      host: process.env.REDIS_HOST,
+      port: process.env.REDIS_PORT,
+    },
   },
 );
 

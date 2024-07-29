@@ -14,6 +14,9 @@ usersRouter.get("/me", ensureAuthenticated, async (req, res) => {
     const user = await User.findOne({
       where: { username: req.session.username },
     });
+    if (user === null) {
+      return res.status(404).json({ error: "User not found" });
+    }
     return res.json({ username: req.session.username, id: user.id });
   }
   return res.json(req.user);
@@ -61,6 +64,10 @@ usersRouter.get("/", async (req, res) => {
       offset: offset,
       raw: true,
     });
+
+    if (users === null) {
+      return res.status(404).json({ error: "Users not found" });
+    }
 
     const numUsers = await User.count();
     return res.json({
@@ -173,16 +180,24 @@ usersRouter.post("/signup", async (req, res) => {
   const salt = bcrypt.genSaltSync(saltRounds);
   const password = bcrypt.hashSync(req.body.password, salt);
 
-  const user = User.build({
-    username: req.body.username,
-    googleId: null,
-    email: null,
-  });
-  user.password = password;
   try {
+    const user = User.build({
+      username: req.body.username,
+      googleId: null,
+      email: null,
+    });
+    user.password = password;
     await user.save();
-  } catch {
-    return res.status(422).json({ error: "User creation failed." });
+  } catch (e) {
+    if (e.name === "SequelizeValidationError") {
+      return res.status(422).json({
+        error: "Invalid input parameters. Expected username.",
+      });
+    } else if (e.name === "SequelizeUniqueConstraintError") {
+      return res.status(422).json({ error: "Username already exists." });
+    } else {
+      return res.status(400).json({ error: "Cannot create user." });
+    }
   }
   return res.json({
     success: "User created successfully.",
