@@ -85,7 +85,7 @@ async function transcriptGPT(fileContent) {
 - If correct answer cannot be extracted, first choice is assumed to be
   correct
 */
-const extractQuestions = (response) => {
+function extractQuestions(response) {
   const lines = response.split("\n");
   const title = lines[0].replaceAll("**", "").trim();
   const questions = [];
@@ -155,7 +155,7 @@ const extractQuestions = (response) => {
     }
   }
   return { title, questions };
-};
+}
 
 async function transcribeAudio(audioFile) {
   const transcription = await groq.audio.transcriptions.create({
