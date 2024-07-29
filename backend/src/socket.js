@@ -261,6 +261,10 @@ export const initializeSocket = (server, sessionMiddleware) => {
       },
     );
 
+    socket.on("doneWithVideo", (code) => {
+      io.to(code).emit("increaseDoneVideoCount");
+    });
+
     socket.on("disconnecting", () => {
       const rooms = Array.from(socket.rooms).slice(1);
       rooms.forEach(async (room) => {

@@ -19,7 +19,8 @@ export const state = reactive({
   hostSocketId: '',
   answerIndex: 0, // the host will store the correct answer index here after broadcasting a question
   // participants will have this updated after submitting an answer
-  hostId: ''
+  hostId: '',
+  doneVideoCount: 0
 })
 
 const URL = environment.apiEndpoint
@@ -59,7 +60,8 @@ export const socketFunctions = {
       (state.hostConnected = false),
       (state.answerIndex = 0),
       (state.hostSocketId = ''),
-      (state.hostId = '')
+      (state.hostId = ''),
+      (state.doneVideoCount = 0)
   },
   selectAnswer(answerIndex, timeLeft) {
     socket.emit('selectAnswer', {
@@ -79,6 +81,7 @@ export const socketFunctions = {
   },
   endQuestion() {
     state.answerCounts = [0, 0, 0, 0]
+    state.doneVideoCount = 0
   },
   broadcastQuestion(question, questionIndex, username, answer) {
     // store the answer for the question but don't broadcast it
@@ -99,6 +102,9 @@ export const socketFunctions = {
       title,
       quizId: state.quizId
     })
+  },
+  doneWithVideo() {
+    socket.emit('doneWithVideo', state.roomCode)
   }
 }
 
@@ -167,4 +173,8 @@ socket.on('quizInfoBroadcasted', ({ title, numQuestions }) => {
 
 socket.on('connect_error', (err) => {
   console.error(`connect_error due to ${err.message}`)
+})
+
+socket.on('increaseDoneVideoCount', () => {
+  state.doneVideoCount++
 })

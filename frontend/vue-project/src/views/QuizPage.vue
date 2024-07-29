@@ -36,10 +36,16 @@
           <div class="result-bar"></div>
         </div>
       </div>
-      <div v-if="isHost && !quizEnded" class="next-question-box">
+      <div v-if="isHost && !quizEnded" class="next-question-box vertical-center">
+        <div v-if="doneVideoCount > 0">
+          Participants Ready: {{ doneVideoCount }} / {{ numPlayers }}
+        </div>
         <button class="btn" @click="endQuestion">Next Question</button>
       </div>
-      <div class="next-question-box">
+      <div class="next-question-box vertical-center">
+        <button v-if="!isHost && !quizEnded && !doneVideo" class="btn" @click="doneWithVideo">
+          Done with video
+        </button>
         <button v-if="fileType !== 'txt' && fileType !== 'text'" class="btn" @click="loadAnswer">
           Load answer
         </button>
@@ -74,7 +80,7 @@ const currentQuestion = ref({
 const selectedAnswer = ref(null)
 const isAnswered = ref(false)
 const answerTimeLeft = ref(1)
-const timePerQuiz = ref(10)
+const timePerQuiz = ref(1)
 const timeLeft = ref(timePerQuiz.value)
 const questionEnded = ref(false)
 const quizEnded = ref(false)
@@ -90,6 +96,7 @@ const fileType = ref('')
 const videoStartTime = ref(0)
 const videoFile = ref(null)
 const playVideo = ref(false)
+const doneVideo = ref(false)
 
 // Auth store
 const authState = useAuthStore()
@@ -100,6 +107,8 @@ const isHost = computed(() => questions.value.length > 0)
 const timeBarWidth = computed(() => (timeLeft.value / timePerQuiz.value) * 100)
 const maxVotes = computed(() => Math.max(...state.value.answerCounts, 1)) // Avoid division by zero
 const correctAnswer = computed(() => state.value.answerIndex)
+const doneVideoCount = computed(() => state.value.doneVideoCount)
+const numPlayers = computed(() => state.value.participants.length - 1)
 
 // Lifecycle hooks
 onMounted(() => {
@@ -194,6 +203,7 @@ const loadNextQuestion = () => {
   timeLeft.value = timePerQuiz.value
   questionEnded.value = false
   state.value.answerCounts = [0, 0, 0, 0] // Reset answer counts
+  doneVideo.value = false
   videoStartTime.value = question.timestamp
   startTimer()
 }
@@ -265,6 +275,11 @@ const loadAnswer = () => {
     `
     videoContainer.querySelector('#audio').currentTime = videoStartTime.value / 1000
   }
+}
+
+const doneWithVideo = () => {
+  socketFunctions.doneWithVideo()
+  doneVideo.value = true
 }
 </script>
 
@@ -393,6 +408,12 @@ const loadAnswer = () => {
   justify-content: center;
 }
 
+.vertical-center {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
 .video-player {
   width: 80%;
   height: 80%;
@@ -409,8 +430,9 @@ const loadAnswer = () => {
   width: 100%;
   height: 100%;
   justify-content: center;
-  display: flex;
-  margin: 20px;
+  align-items: center;
+  margin-left: 5%;
+  margin-right: 5%;
 }
 
 .quiz-ended {
