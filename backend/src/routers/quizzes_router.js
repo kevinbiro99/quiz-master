@@ -92,12 +92,14 @@ quizzesRouter.post(
         return res.status(404).json({ error: "User not found" });
       }
 
-      await quizJobQueue.add("quizFromTranscript", {
+      const job = await quizJobQueue.add("quizFromTranscript", {
         filename: textFile.filename,
         uploadDir: uploadDir,
         id,
       });
-      return res.status(202).json({ message: "Quiz creation in progress" });
+      return res
+        .status(202)
+        .json({ message: "Quiz creation in progress", jobId: job.id });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
@@ -144,12 +146,14 @@ quizzesRouter.post(
         return res.status(404).json({ error: "User not found" });
       }
 
-      await quizJobQueue.add("quizFromAudio", {
+      const job = await quizJobQueue.add("quizFromAudio", {
         filename: audioFile.filename,
         uploadDir: uploadDir,
         id,
       });
-      return res.status(202).json({ message: "Quiz creation in progress" });
+      return res
+        .status(202)
+        .json({ message: "Quiz creation in progress", jobId: job.id });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Internal server error" });
@@ -196,12 +200,14 @@ quizzesRouter.post(
         return res.status(404).json({ error: "User not found" });
       }
 
-      await quizJobQueue.add("quizFromVideo", {
+      const job = await quizJobQueue.add("quizFromVideo", {
         filename: videoFile.filename,
         uploadDir: uploadDir,
         id,
       });
-      return res.status(202).json({ message: "Quiz creation in progress" });
+      return res
+        .status(202)
+        .json({ message: "Quiz creation in progress", jobId: job.id });
     } catch (error) {
       if (error.name === "SequelizeForeignKeyConstraintError") {
         return res.status(422).json({ error: "User not found" });
@@ -210,7 +216,7 @@ quizzesRouter.post(
           error: "Invalid input parameters. Expected id and file",
         });
       } else {
-        console.log(error);
+        console.error(error);
         return res.status(500).json({ error: "Internal server error" });
       }
     }

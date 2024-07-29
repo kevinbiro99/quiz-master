@@ -1,4 +1,4 @@
-import { Worker } from "bullmq";
+import { Worker, Queue } from "bullmq";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegStatic from "ffmpeg-static";
 import Groq from "groq-sdk";
@@ -7,7 +7,6 @@ import { sequelize } from "../datasource.js";
 import fs from "fs";
 import { Quiz } from "../models/quizzes.js";
 import { Question } from "../models/questions.js";
-import { Queue } from "bullmq";
 
 config();
 
@@ -22,7 +21,7 @@ try {
 }
 
 async function transcriptGPT(fileContent) {
-  const prompt = `Generate a 4 choice quiz with the answer after each question along with timestamp that reveals the answer based on the transcript below. Follow this sample format:
+  const prompt = `Generate a 4 choice quiz with the answer after each question along with timestamp (minutes:seconds) that reveals the answer based on the transcript below. Follow this sample format:
                     **title for quiz**
 
                     **question**
@@ -35,17 +34,24 @@ async function transcriptGPT(fileContent) {
 
                     **question**...
 
-                    An example of a quiz would be:
+                    An example of a quiz with 2 questions would be (including asterisks for formatting purposes):
                     **Sample Quiz**
 
-                    **Question 1**
-                    What is the capital of France?
+                    **Question 1** What is the capital of France?
                     **Choice A** Berlin
                     **Choice B** Madrid
                     **Choice C** Paris
                     **Choice D** Rome
                     **Answer** C) Paris
-                    **Timestamp** 0:00
+                    **Timestamp** 10:23
+
+                    **Question 2** What is the capital of Germany?
+                    **Choice A** Berlin
+                    **Choice B** Madrid
+                    **Choice C** Paris
+                    **Choice D** Rome
+                    **Answer** A) Berlin
+                    **Timestamp** 51:10
                     `;
 
   const chatCompletion = await groq.chat.completions.create({
@@ -63,7 +69,7 @@ async function transcriptGPT(fileContent) {
 }
 
 /* Assumptions:
-  - First line of every resposne is title
+  - First line of every response is title
   - Every question has at least a question, 4 choices,
     an answer, and timestamp, in that order with each occupying 1 or 2 lines
   - ** is used to indicate the start of a question, choice, answer, or
@@ -93,15 +99,12 @@ const extractQuestions = (response) => {
     if (!lines[i].includes("**")) continue;
     index = 0;
     for (index; i < lines.length && index < 7; i++, index++) {
-      temp = lines[i];
-      if (
-        i + 1 < lines.length &&
-        !lines[i + 1].includes("**") &&
-        (index !== 0 || lines[i + 1].includes("?"))
-      ) {
-        temp += " " + lines[i + 1];
-        i++;
+      if (!lines[i].includes("**")) {
+        index--;
+        continue;
       }
+
+      temp = lines[i];
 
       if (questionPattern.test(temp)) {
         question.text = temp
@@ -109,12 +112,13 @@ const extractQuestions = (response) => {
           .replaceAll("**", "")
           .trim();
       } else if (choicePattern.test(temp)) {
-        question.options.push(temp.replaceAll("**", "").trim());
+        const choice = temp.split(choicePattern)[1].replaceAll("**", "").trim();
+        question.options.push(choice);
       } else if (timestampPattern.test(temp)) {
         const timeInSeconds = /\d+.\d\d/.exec(temp);
         const timeInMinutes = /\d+:\d\d/.exec(temp);
         if (timeInSeconds !== null) {
-          question.timestamp = 1000 * parseInt(timeInSeconds[0].split(".")[0]);
+          question.timestamp = 1000 * parseInt(timeInSeconds[0].split(":")[0]);
         } else if (timeInMinutes !== null) {
           const [minutes, seconds] = timeInMinutes[0].split(":");
           question.timestamp =
@@ -182,8 +186,8 @@ async function createQuiz(id, title, filename, questions) {
   return quiz;
 }
 
-async function onQuizFromVideo(jobData) {
-  const { filename, uploadDir, id } = jobData;
+async function onQuizFromVideo(job) {
+  const { filename, uploadDir, id } = job.data;
 
   const audioFilePath = "assets/output.mp3";
   await new Promise((resolve, reject) => {
@@ -194,26 +198,51 @@ async function onQuizFromVideo(jobData) {
       .run();
   });
 
+  job.updateProgress(25);
+
   const transcript = await transcribeAudio(audioFilePath);
+  job.updateProgress(50);
+
   const response = await transcriptGPT(transcript);
+  job.updateProgress(75);
+
   const { title, questions } = extractQuestions(response);
-  return await createQuiz(id, title, filename, questions);
+  const quiz = await createQuiz(id, title, filename, questions);
+  job.updateProgress(100);
+
+  return quiz;
 }
 
-async function onQuizFromAudio(jobData) {
-  const { filename, uploadDir, id } = jobData;
+async function onQuizFromAudio(job) {
+  const { filename, uploadDir, id } = job.data;
+  job.updateProgress(25);
   const transcript = await transcribeAudio(uploadDir + filename);
+  job.updateProgress(50);
+
   const response = await transcriptGPT(transcript);
+  job.updateProgress(75);
+
   const { title, questions } = extractQuestions(response);
-  return await createQuiz(id, title, filename, questions);
+  const quiz = await createQuiz(id, title, filename, questions);
+  job.updateProgress(100);
+
+  return quiz;
 }
 
-async function onQuizFromTranscript(jobData) {
-  const { filename, uploadDir, id } = jobData;
+async function onQuizFromTranscript(job) {
+  const { filename, uploadDir, id } = job.data;
+  job.updateProgress(25);
   const fileContent = fs.readFileSync(uploadDir + filename, "utf8");
+  job.updateProgress(50);
+
   const response = await transcriptGPT(fileContent);
+  job.updateProgress(75);
+
   const { title, questions } = extractQuestions(response);
-  return await createQuiz(id, title, filename, questions);
+  const quiz = await createQuiz(id, title, filename, questions);
+  job.updateProgress(100);
+
+  return quiz;
 }
 
 const jobsHandlers = {
@@ -232,7 +261,7 @@ const quizWorker = new Worker(
     console.log(`Processing job with ID ${job.id}`);
     const handler = jobsHandlers[job.name];
     if (handler) {
-      return handler(job.data);
+      return handler(job);
     }
   },
   {
@@ -244,6 +273,7 @@ quizWorker.on("completed", (job) => {
   console.log(`Job with ID ${job.id} has been completed`);
 });
 
-quizWorker.on("failed", (job, err) => {
+quizWorker.on("failed", async (job, err) => {
   console.log(`Job with ID ${job.id} has failed with error: ${err.message}`);
+  await job.remove();
 });

@@ -23,7 +23,7 @@
       </div>
     </div>
     <div class="results" v-else>
-      <h2>Question Results</h2>
+      <h2>Question Results: {{ currentQuestion.text }}</h2>
       <div class="results-container">
         <div
           v-for="(choice, index) in currentQuestion.choices"
@@ -39,7 +39,13 @@
       <div v-if="isHost && !quizEnded">
         <button class="btn" @click="endQuestion">Next Question</button>
       </div>
-      <button v-if="isHost" class="btn" @click="loadVideo">Video answer</button>
+      <button
+        v-if="isHost && fileType !== 'txt' && fileType !== 'text'"
+        class="btn"
+        @click="loadAnswer"
+      >
+        Load answer
+      </button>
       <div class="video-container"></div>
     </div>
     <div v-if="quizEnded">
@@ -58,7 +64,6 @@ import { socketFunctions } from '@/socket'
 import { useAuthStore } from '@/stores/index'
 import LeaderBoardComponent from '@/components/LeaderboardComponent.vue'
 import ConnectionLostComponent from '@/components/ConnectionLostComponent.vue'
-import { environment } from '@/environments/environment'
 
 // Define reactive state variables
 const quizId = ref(0)
@@ -84,6 +89,7 @@ const optionsMap = {
 }
 const isLoading = ref(false)
 const playVideo = ref(false)
+const fileType = ref('')
 const videoStartTime = ref(0)
 
 // Auth store
@@ -126,6 +132,7 @@ const fetchQuiz = () => {
         // Not the host of the quiz
         console.error('Error fetching quiz:', res.error)
       } else {
+        fileType.value = res.quiz.filename.split('.')[1]
         questions.value = res.questions
         socketFunctions.broadcastQuizInfo(res.quiz.title, res.questions.length)
         broadcastQuestion()
@@ -229,7 +236,7 @@ const endQuestion = () => {
   }
 }
 
-const loadVideo = () => {
+const loadAnswer = () => {
   if (playVideo.value) {
     playVideo.value = false
     document.querySelector('.video-container').innerHTML = ''
@@ -237,10 +244,21 @@ const loadVideo = () => {
   }
   playVideo.value = true
   const videoContainer = document.querySelector('.video-container')
-  videoContainer.innerHTML = `
-    <video id="video" width="90%" class="video-player" controls src=${environment.apiEndpoint}/api/users/${authState.userId}/quizzes/${quizId.value}/video></video>
-  `
-  videoContainer.querySelector('#video').currentTime = videoStartTime.value / 1000
+  apiService.getQuizFile(authState.userId, quizId.value).then((res) => {
+    fileType.value = res.type.split('/')[0]
+    const blobUrl = URL.createObjectURL(res)
+    if (fileType.value === 'video') {
+      videoContainer.innerHTML = `
+        <video id="video" width="90%" class="video-player" controls src=${blobUrl}></video>
+      `
+      videoContainer.querySelector('#video').currentTime = videoStartTime.value / 1000
+    } else if (fileType.value === 'audio') {
+      videoContainer.innerHTML = `
+        <audio id="audio" width="90%" class="audio-player" controls src=${blobUrl}></audio>
+      `
+      videoContainer.querySelector('#audio').currentTime = videoStartTime.value / 1000
+    }
+  })
 }
 </script>
 
@@ -367,6 +385,11 @@ const loadVideo = () => {
 .video-player {
   width: 80%;
   height: 80%;
+}
+
+.audio-player {
+  width: 80%;
+  height: 40%;
 }
 
 .video-container {

@@ -1,5 +1,6 @@
 import { environment } from '@/environments/environment'
 import fetchWrapper from './fetch-wrapper'
+import fetchWrapperFile from './fetch-wrapper-file'
 
 export default {
   getUsers(page: number, limit = 10) {
@@ -77,10 +78,16 @@ export default {
     })
   },
 
-  async createQuizFromTxt(userId: any, textFile: string | Blob) {
+  getQuizFile(userId: string, quizId: any) {
+    return fetchWrapperFile(`/api/users/${userId}/quizzes/${quizId}/video`, {
+      method: 'GET'
+    })
+  },
+
+  createQuizFromTxt(userId: any, textFile: string | Blob) {
     const formData = new FormData()
     formData.append('textFile', textFile)
-    return await fetchWrapper(`/api/users/${userId}/quizzes/text`, {
+    return fetchWrapper(`/api/users/${userId}/quizzes/text`, {
       method: 'POST',
       headers: {
         Accept: 'application/json'
@@ -89,10 +96,10 @@ export default {
     })
   },
 
-  async createQuizFromAudio(userId: any, audioFile: string | Blob) {
+  createQuizFromAudio(userId: any, audioFile: string | Blob) {
     const formData = new FormData()
     formData.append('audioFile', audioFile)
-    return await fetchWrapper(`/api/users/${userId}/quizzes/audio`, {
+    return fetchWrapper(`/api/users/${userId}/quizzes/audio`, {
       method: 'POST',
       headers: {
         Accept: 'application/json'
@@ -101,10 +108,10 @@ export default {
     })
   },
 
-  async createQuizFromVideo(userId: any, videoFile: string | Blob) {
+  createQuizFromVideo(userId: any, videoFile: string | Blob) {
     const formData = new FormData()
     formData.append('videoFile', videoFile)
-    return await fetchWrapper(`/api/users/${userId}/quizzes/video`, {
+    return fetchWrapper(`/api/users/${userId}/quizzes/video`, {
       method: 'POST',
       headers: {
         Accept: 'application/json'

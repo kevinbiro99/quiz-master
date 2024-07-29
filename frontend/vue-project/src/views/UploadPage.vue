@@ -22,8 +22,9 @@
         hidden
       />
     </div>
-    <div v-if="state.file" class="file-card">
-      <p>{{ state.file.name }}</p>
+    <div v-if="state.file || state.filename" class="file-card">
+      <p>{{ state.filename }}</p>
+      <p v-if="state.loading">{{ state.loadingMessage }}</p>
       <div class="progress-bar">
         <div class="progress" :style="{ width: state.uploadProgress + '%' }"></div>
       </div>
@@ -36,16 +37,25 @@
       Submit
     </button>
     <p v-if="state.fileUploaded">File Uploaded!</p>
-    <p v-if="state.invalidFile">{{ state.errorMessage }}</p>
-    <p v-if="state.loading">{{ state.loadingMessage }}</p>
+    <p>{{ state.errorMessage }}</p>
+    <div v-if="state.loading" class="job-progress">
+      <p>Job Progress:</p>
+      <div class="progress-bar">
+        <div
+          class="progress"
+          :style="{ width: (100 * state.currentPhase) / state.numPhases + '%' }"
+        ></div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import apiService from '@/services/api-service'
 import { useAuthStore } from '@/stores/index'
+import { environment } from '@/environments/environment'
 
 export default {
   setup() {
@@ -56,11 +66,16 @@ export default {
       fileUploaded: false,
       invalidFile: false,
       file: null,
-      uploadProgress: 0,
+      filename: '',
+      uploadProgress: 0, // Progress bar percentage
+      jobProgress: 0, // Job progress percentage
+      currentPhase: 0, // Current phase of the upload process
+      numPhases: 0, // Total number of phases in the upload process
       errorMessage: '',
       loading: false,
       loadingMessage: '',
-      apiCallDone: false
+      eventSource: null,
+      jobId: '' // Initialize jobId state
     })
 
     const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB in bytes
@@ -73,12 +88,14 @@ export default {
         file.size <= MAX_FILE_SIZE
       ) {
         state.file = file
+        state.filename = file.name
         state.invalidFile = false
         state.fileUploaded = false
         state.uploadProgress = 0
         state.errorMessage = ''
       } else {
         state.file = null
+        state.filename = ''
         state.invalidFile = true
         state.errorMessage =
           file.size > MAX_FILE_SIZE
@@ -95,12 +112,14 @@ export default {
         file.size <= MAX_FILE_SIZE
       ) {
         state.file = file
+        state.filename = file.name
         state.invalidFile = false
         state.fileUploaded = false
         state.uploadProgress = 0
         state.errorMessage = ''
       } else {
         state.file = null
+        state.filename = ''
         state.invalidFile = true
         state.errorMessage =
           file.size > MAX_FILE_SIZE
@@ -150,10 +169,14 @@ export default {
         }
 
         state.loadingMessage = 'Uploading file...'
-        handleSuccessfulUpload(uploadPhases)
+        state.numPhases = uploadPhases.length
         apiMethod(authState.userId, state.file)
-          .then(() => {
-            state.apiCallDone = true
+          .then((res) => {
+            state.jobId = res.jobId
+            localStorage.setItem('filename', state.filename) // Store filename in localStorage
+            localStorage.setItem('jobId', state.jobId) // Store jobId in localStorage
+            localStorage.setItem('uploadPhases', JSON.stringify(uploadPhases)) // Store uploadPhases in localStorage
+            setupSSE(state.jobId, uploadPhases) // Pass uploadPhases to SSE setup
           })
           .catch((error) => {
             handleUploadError(error)
@@ -163,32 +186,57 @@ export default {
       }
     }
 
-    const handleSuccessfulUpload = (uploadPhases) => {
-      let currentPhase = 0
-      state.loadingMessage = uploadPhases[currentPhase]
+    const setupSSE = (jobId, uploadPhases) => {
+      if (state.eventSource) {
+        state.eventSource.close()
+      }
+      state.currentPhase = 0
 
-      const uploadMock = () => {
+      state.eventSource = new EventSource(`${environment.apiEndpoint}/api/progress/${jobId}`)
+      state.eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+
+        if (data.error) {
+          console.error('SSE error:', data.error)
+          state.errorMessage = 'An error occurred while processing the job: ' + data.error
+          state.loading = false
+          state.eventSource.close() // Close the SSE connection
+          return // Exit early
+        }
+
         if (state.uploadProgress < 100) {
-          state.uploadProgress += 10
-          setTimeout(uploadMock, 100)
+          state.uploadProgress += 20
+          // Ensure uploadProgress does not exceed 95, data.progress will handle the rest
+          state.uploadProgress = Math.min(state.uploadProgress, 95)
+          if (state.jobProgress !== data.progress || data.progress === 100) {
+            state.uploadProgress = 100
+          }
         } else {
-          if (!state.apiCallDone && state.loadingMessage === 'Transcribing text...') {
-            setTimeout(uploadMock, 100)
-          } else {
-            if (currentPhase < uploadPhases.length - 1) {
-              currentPhase++
-              state.loadingMessage = uploadPhases[currentPhase]
+          if (state.jobProgress !== data.progress || data.progress === 100) {
+            if (state.currentPhase < uploadPhases.length - 1) {
+              state.currentPhase++
+              state.loadingMessage = uploadPhases[state.currentPhase]
               state.uploadProgress = 0
-              setTimeout(uploadMock, 100)
             } else {
+              localStorage.removeItem('filename') // Remove filename from localStorage
+              localStorage.removeItem('jobId') // Remove jobId from localStorage
+              localStorage.removeItem('uploadPhases') // Remove uploadPhases from localStorage
               state.fileUploaded = true
               state.loading = false
               router.push('/host')
             }
           }
+          state.jobProgress = data.progress
         }
       }
-      uploadMock()
+      state.eventSource.onerror = (error) => {
+        console.error('SSE error:', error)
+        state.errorMessage = 'An error occurred while receiving progress updates. Please try again.'
+        state.loading = false
+        localStorage.removeItem('filename')
+        localStorage.removeItem('jobId') // Remove jobId from localStorage
+        localStorage.removeItem('uploadPhases') // Remove uploadPhases from localStorage
+      }
     }
 
     const handleUploadError = (error) => {
@@ -196,6 +244,26 @@ export default {
       state.errorMessage = 'An error occurred while uploading the file. Please try again.'
       state.loading = false
     }
+
+    onMounted(() => {
+      // check if there are any jobs in progress
+      const jobId = localStorage.getItem('jobId')
+      const uploadPhases = JSON.parse(localStorage.getItem('uploadPhases'))
+      const filename = localStorage.getItem('filename')
+      if (jobId) {
+        state.jobId = jobId
+        state.filename = filename
+        state.loading = true
+        state.numPhases = uploadPhases.length
+        setupSSE(state.jobId, uploadPhases)
+      }
+    })
+
+    onUnmounted(() => {
+      if (state.eventSource) {
+        state.eventSource.close()
+      }
+    })
 
     return {
       fileInput,
@@ -291,6 +359,12 @@ export default {
   width: 100%;
   max-width: 300px;
   text-align: center;
+}
+
+.job-progress {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 300px;
 }
 
 .progress-bar {
