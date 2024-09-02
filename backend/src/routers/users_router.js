@@ -122,6 +122,10 @@ usersRouter.post("/signup", async (req, res) => {
     });
     user.password = password;
     await user.save();
+    return res.json({
+      success: "User created successfully.",
+      username: user.username,
+    });
   } catch (e) {
     if (e.name === "SequelizeValidationError") {
       return res.status(422).json({
@@ -133,8 +137,4 @@ usersRouter.post("/signup", async (req, res) => {
       return res.status(400).json({ error: "Cannot create user." });
     }
   }
-  return res.json({
-    success: "User created successfully.",
-    username: user.username,
-  });
 });

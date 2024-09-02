@@ -40,7 +40,7 @@ services:
       - NGINX_PROXY_CONTAINER=nginx-proxy
 
   frontend:
-    image: ghcr.io/utsc-cscc09-programming-on-the-web/frontend-kevinbiro99
+    image: ghcr.io/kevinbiro99/frontend-kevinbiro99
     build: ./frontend/vue-project
     container_name: frontend
     restart: always
@@ -56,7 +56,7 @@ services:
       - /usr/src/app/node_modules
 
   backend:
-    image: ghcr.io/utsc-cscc09-programming-on-the-web/backend-kevinbiro99
+    image: ghcr.io/kevinbiro99/backend-kevinbiro99
     container_name: backend
     build: ./backend
     restart: always
