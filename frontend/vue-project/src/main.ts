@@ -16,7 +16,7 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 
-// Sync session storage with store state on app created
+// Sync session storage with store state on app created.
 app.mixin({
   created() {
     const authStore = useAuthStore()
